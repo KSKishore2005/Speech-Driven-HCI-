@@ -78,6 +78,11 @@ export class QuizEngine {
     let result = null;
     if (this.currentLesson?.id) {
       try {
+        console.log(`📝 Submitting answer to ${API_BASE}/quiz/check`, {
+          lesson_id: this.currentLesson.id,
+          question_index: this.currentIndex,
+          answer_index: answerIndex
+        });
         const res = await fetch(`${API_BASE}/quiz/check`, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
@@ -86,10 +91,19 @@ export class QuizEngine {
             question_index: this.currentIndex,
             answer_index:   answerIndex,
           }),
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(3000),
         });
-        if (res.ok) result = await res.json();
-      } catch (_) {}
+        if (res.ok) {
+          result = await res.json();
+          console.log("✅ Backend validation successful:", result);
+        } else {
+          console.warn(`⚠️ Backend returned HTTP ${res.status}`);
+        }
+      } catch (err) {
+        console.error("❌ Backend quiz check failed:", err.message);
+      }
+    } else {
+      console.warn("⚠️ No lesson context, using local fallback");
     }
 
     // Fallback: local check

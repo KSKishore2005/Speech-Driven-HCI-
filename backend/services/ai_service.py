@@ -1,23 +1,38 @@
 # =============================================================
-# services/ai_service.py — OpenAI GPT-4o Integration
+# services/ai_service.py — Groq API Integration
 # Smart Learning Assistant Backend
 # =============================================================
 
 import os
-from openai import OpenAI
+import sys
+import time
+from groq import Groq
 from utils.helpers import make_speech_friendly
 
-client: OpenAI = None
+client: Groq = None
+_last_request_time = 0
+_min_request_interval = 0.5  # Groq is fast - 0.5 second between requests
 
 
-def _get_client() -> OpenAI:
+def _get_client() -> Groq:
     global client
     if client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key or api_key.startswith("sk-your"):
-            raise ValueError("OPENAI_API_KEY not set. Please add it to your .env file.")
-        client = OpenAI(api_key=api_key)
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key or api_key.startswith("gsk-your"):
+            raise ValueError("GROQ_API_KEY not set. Please add it to your .env file.")
+        client = Groq(api_key=api_key)
     return client
+
+
+def _throttle_request():
+    """Enforce minimum interval between requests to avoid rate limits."""
+    global _last_request_time
+    elapsed = time.time() - _last_request_time
+    if elapsed < _min_request_interval:
+        sleep_time = _min_request_interval - elapsed
+        print(f"[AI] Throttling: sleeping {sleep_time:.2f}s", file=sys.stderr)
+        time.sleep(sleep_time)
+    _last_request_time = time.time()
 
 
 # System persona for the learning assistant
@@ -46,12 +61,16 @@ def ask_openai(
     conversation_history: list = None,
 ) -> dict:
     """
-    Send a user message to OpenAI GPT-4o and return response.
+    Send a user message to Groq API and return response.
     
-    Returns: { response, speech_response, tokens_used }
+    Returns: { response, speech_response, tokens_used, error }
     """
     try:
         c = _get_client()
+        print(f"[AI] Got Groq client successfully", file=sys.stderr)
+        
+        # Throttle to avoid rate limits
+        _throttle_request()
 
         # Build messages array
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -85,9 +104,10 @@ Answer their question in context of this lesson when relevant."""
         # Add current user message
         messages.append({"role": "user", "content": message})
 
-        # Call GPT-4o
+        # Call Groq API
+        # Currently available model: llama-3.1-8b-instant (fast, reliable, free tier)
         response = c.chat.completions.create(
-            model="gpt-4o",
+            model="llama-3.1-8b-instant",
             messages=messages,
             max_tokens=600,
             temperature=0.7,
@@ -97,6 +117,8 @@ Answer their question in context of this lesson when relevant."""
         speech_response = make_speech_friendly(text_response)
         tokens = response.usage.total_tokens if response.usage else 0
 
+        print(f"[AI] ✅ Groq call successful. Tokens: {tokens}, Response length: {len(text_response)}", file=sys.stderr)
+
         return {
             "response":        text_response,
             "speech_response": speech_response,
@@ -105,19 +127,39 @@ Answer their question in context of this lesson when relevant."""
         }
 
     except ValueError as e:
-        # API key not set — return a graceful fallback
+        # API key not set
+        error_msg = str(e)
+        print(f"[AI] ValueError: {error_msg}", file=sys.stderr)
         return {
-            "response":        f"I can help you learn! However, the AI brain is not connected yet. Please set up your OpenAI API key. Your question was: '{message}'",
-            "speech_response": "The AI brain is not connected yet. Please set up your OpenAI API key in the backend .env file.",
+            "response":        f"I can help you learn! However, the AI brain is not connected yet. Please set up your Groq API key. Your question was: '{message}'",
+            "speech_response": "The AI brain is not connected yet. Please set up your Groq API key in the backend .env file.",
             "tokens_used":     0,
-            "error":           str(e),
+            "error":           error_msg,
         }
     except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        print(f"[AI] {error_type}: {error_msg}", file=sys.stderr)
+        print(f"[AI] Full error: {repr(e)}", file=sys.stderr)
+        
+        # Return more helpful error based on error type
+        if "rate" in error_msg.lower() or "429" in error_msg:
+            response = "🚨 Groq Rate Limit: Too many requests. Please wait a moment and try again."
+            print(f"[AI] RATE LIMIT: Waiting required", file=sys.stderr)
+        elif "authentication" in error_msg.lower() or "api_key" in error_msg.lower() or "401" in error_msg:
+            response = "🔑 Groq Authentication Failed: Your API key is invalid. Please check your .env file."
+        elif "connection" in error_msg.lower() or "network" in error_msg.lower():
+            response = "🌐 Network Error: Cannot reach Groq servers. Please check your internet connection."
+        elif "timeout" in error_msg.lower():
+            response = "⏱️ Request Timeout: Groq server is slow. Please try again."
+        else:
+            response = f"❌ Error ({error_type}): {error_msg[:50]}... Please try again."
+        
         return {
-            "response":        "I'm sorry, I had trouble processing that. Please try again.",
+            "response":        response,
             "speech_response": "I'm sorry, I had a problem. Please try again.",
             "tokens_used":     0,
-            "error":           str(e),
+            "error":           error_msg,
         }
 
 
@@ -127,7 +169,7 @@ def generate_quiz_explanation(question: str, correct_answer: str, user_type: str
         c = _get_client()
         prompt = f"In 1-2 sentences, explain why '{correct_answer}' is the correct answer to: '{question}'. Be concise and educational."
         resp = c.chat.completions.create(
-            model="gpt-4o",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "You are a concise educational assistant."},
                 {"role": "user", "content": prompt},
@@ -136,5 +178,6 @@ def generate_quiz_explanation(question: str, correct_answer: str, user_type: str
             temperature=0.5,
         )
         return resp.choices[0].message.content.strip()
-    except Exception:
+    except Exception as e:
+        print(f"[AI] Quiz explanation error: {e}", file=sys.stderr)
         return f"The correct answer is {correct_answer}."

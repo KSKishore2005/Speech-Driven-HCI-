@@ -54,8 +54,8 @@ if __name__ == "__main__":
     app = create_app()
     port = int(os.getenv("FLASK_PORT", 5000))
     debug = os.getenv("FLASK_ENV", "development") == "development"
-    print(f"\n🚀 Smart Learning Assistant Backend")
+    print(f"\n Smart Learning Assistant Backend (Groq-Powered)")
     print(f"   Running at: http://localhost:{port}")
-    print(f"   OpenAI key: {'✅ Set' if os.getenv('OPENAI_API_KEY') and not os.getenv('OPENAI_API_KEY', '').startswith('sk-your') else '❌ Not set (add to .env)'}")
+    print(f"   Groq API key: {' Set' if os.getenv('GROQ_API_KEY') and not os.getenv('GROQ_API_KEY', '').startswith('gsk-your') else '❌ Not set (add to .env)'}")
     print(f"   Mode: {'Development' if debug else 'Production'}\n")
     app.run(host="0.0.0.0", port=port, debug=debug)

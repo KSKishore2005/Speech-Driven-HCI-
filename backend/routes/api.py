@@ -6,6 +6,7 @@
 from flask import Blueprint, request, jsonify
 from services import intent_service, content_service, ability_service, ai_service
 from utils.helpers import normalize_text, error_response, success_response
+import sys
 
 api = Blueprint("api", __name__)
 
@@ -117,6 +118,12 @@ def ask():
         conversation_history=history,
     )
 
+    # Check for errors
+    if ai_result.get("error"):
+        print(f"[API] ⚠️ AI service error: {ai_result['error']}", file=sys.stderr)
+    else:
+        print(f"[API] ✅ AI response generated ({len(ai_result['response'])} chars)", file=sys.stderr)
+
     # Update conversation history
     history.append({"role": "user", "content": raw_message})
     history.append({"role": "assistant", "content": ai_result["response"]})
@@ -193,15 +200,16 @@ def check_quiz_answer():
     if "error" in result:
         return jsonify(error_response(result["error"])[0]), 404
 
-    # Optionally generate AI explanation
-    if result.get("correct") and result.get("correct_answer"):
-        try:
-            explanation = ai_service.generate_quiz_explanation(
-                result["question"], result["correct_answer"], user_type
-            )
-            result["ai_explanation"] = explanation
-        except Exception:
-            result["ai_explanation"] = ""
+    # TODO: AI explanation disabled for now (was timing out)
+    # To enable: uncomment below and add timeout to OpenAI client
+    # if result.get("correct") and result.get("correct_answer"):
+    #     try:
+    #         explanation = ai_service.generate_quiz_explanation(
+    #             result["question"], result["correct_answer"], user_type
+    #         )
+    #         result["ai_explanation"] = explanation
+    #     except Exception:
+    #         result["ai_explanation"] = ""
 
     result["status"] = "ok"
     return jsonify(result)

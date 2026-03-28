@@ -22,7 +22,7 @@ def _load() -> dict:
 
 
 def get_all_subjects() -> list:
-    """Return all subjects with basic info (no quiz answers for security)."""
+    """Return all subjects with lessons (including quiz data for frontend)."""
     db = _load()
     result = []
     for subj in db["subjects"]:
@@ -31,10 +31,7 @@ def get_all_subjects() -> list:
             "title": subj["title"],
             "icon":  subj.get("icon", "📚"),
             "lesson_count": len(subj["lessons"]),
-            "lessons": [
-                {"id": l["id"], "title": l["title"], "summary": l["summary"]}
-                for l in subj["lessons"]
-            ],
+            "lessons": [_safe_lesson(l, subj) for l in subj["lessons"]],
         })
     return result
 
@@ -98,23 +95,37 @@ def find_lesson_by_keywords(query: str, subject_id: Optional[str] = None) -> Opt
 
 def check_quiz_answer(lesson_id: str, question_index: int, answer_index: int) -> dict:
     """Validate a quiz answer. Returns correctness + explanation."""
+    if not isinstance(question_index, int) or not isinstance(answer_index, int):
+        return {"error": "Invalid question_index or answer_index type"}
+    
     db = _load()
     for subj in db["subjects"]:
         for lesson in subj["lessons"]:
             if lesson["id"] != lesson_id:
                 continue
             quiz = lesson.get("quiz", [])
-            if question_index >= len(quiz):
-                return {"error": "Invalid question index"}
+            if not quiz or question_index >= len(quiz) or question_index < 0:
+                return {"error": f"Invalid question index: {question_index}"}
             q = quiz[question_index]
-            correct = q["answer"]
+            if not q or "answer" not in q or "options" not in q:
+                return {"error": "Malformed quiz question"}
+            
+            correct = int(q["answer"])
             is_correct = answer_index == correct
+            
+            # Safe access to options
+            options = q.get("options", [])
+            if correct < 0 or correct >= len(options):
+                return {"error": "Quiz configuration error: correct answer out of bounds"}
+            if answer_index < 0 or answer_index >= len(options):
+                return {"error": "Invalid answer index provided"}
+            
             return {
                 "correct":        is_correct,
                 "selected_index": answer_index,
                 "correct_index":  correct,
-                "correct_answer": q["options"][correct],
-                "selected_answer": q["options"][answer_index] if 0 <= answer_index < len(q["options"]) else "?",
+                "correct_answer": options[correct],
+                "selected_answer": options[answer_index],
                 "hint":           q.get("hint", ""),
                 "question":       q["question"],
             }

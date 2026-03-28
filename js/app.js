@@ -117,12 +117,16 @@ class SmartLearningApp {
         const data = await res.json();
         this._backendOnline = true;
         this._updateApiStatus(true);
+        console.log("✅ Backend connected. Subjects loaded:", data.subjects);
         this._buildSubjectGrid(data.subjects);
         return;
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error("❌ Backend connection failed:", err.message);
+    }
     this._backendOnline = false;
     this._updateApiStatus(false);
+    console.warn("⚠️ Using local fallback (backend offline)");
     this._buildStaticSubjectGrid();
   }
 
@@ -294,15 +298,27 @@ class SmartLearningApp {
   }
 
   _activateMic() {
+    console.log(`🎤 Microphone activation request (mode: ${this.adapter.getMode()})`);
     if (this.adapter.getMode() === "hearing-impaired") {
-      this._showError("Voice input is disabled in Hearing Impaired mode.");
+      const msg = "Voice input is disabled in Hearing Impaired mode.";
+      console.warn(`⚠️ ${msg}`);
+      this._showError(msg);
       return;
     }
-    this.voice.startListening();
+    const started = this.voice.startListening();
+    console.log(`🎤 Voice listening started: ${started}`);
+    if (!started) {
+      console.error("❌ Failed to start listening");
+      this._showError("Failed to start listening. Check microphone permissions.");
+    }
   }
 
   async _handleInput(text, source) {
-    if (!text || this.state === STATE.PROCESSING) return;
+    console.log(`📨 Input received: "${text}" (source: ${source})`);
+    if (!text || this.state === STATE.PROCESSING) {
+      console.warn(`⚠️ Handler skipped: text=${!!text}, state=${this.state}`);
+      return;
+    }
 
     // Show what user said
     if (this.$transcript && source === "voice") {
@@ -336,6 +352,7 @@ class SmartLearningApp {
 
   // ── Backend API Call ──────────────────────────────────────────
   async _askBackend(message, source = "text", lessonId = null) {
+    console.log(`📤 Sending to backend: "${message}" (source: ${source}, lesson: ${lessonId})`);
     this.state = STATE.PROCESSING;
     this._setStatus("processing", "⏳ Thinking…");
     this.voice.stopSpeaking();
@@ -365,6 +382,7 @@ class SmartLearningApp {
         return;
       }
 
+      console.log(`📡 Calling ${API_BASE}/ask...`);
       const res = await fetch(`${API_BASE}/ask`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -372,8 +390,20 @@ class SmartLearningApp {
         signal:  AbortSignal.timeout(15000),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(`❌ HTTP ${res.status}: ${errText}`);
+        throw new Error(`HTTP ${res.status}: ${errText.substring(0, 100)}`);
+      }
       const data = await res.json();
+      
+      console.log("✅ Backend response received:", {
+        intent: data.intent,
+        hasLesson: !!data.lesson,
+        lesson: data.lesson?.id,
+        uiMode: data.ui_mode,
+        responseLength: data.response?.length
+      });
 
       // Update adaptive mode if backend detected something different
       if (data.ui_mode && data.ui_mode !== "normal" && this.adapter.getMode() === "normal") {
@@ -390,10 +420,12 @@ class SmartLearningApp {
       const textResp   = data.response        || "I couldn't generate a response. Please try again.";
       const speechResp = data.speech_response || textResp;
 
+      console.log(`📤 Displaying response: "${textResp.substring(0, 50)}..."`);
       this._displayResponse(textResp);
 
       // Speak if not in hearing-impaired mode
       if (this.adapter.getMode() !== "hearing-impaired") {
+        console.log(`🔊 Speaking response (length: ${speechResp.length} chars)`);
         await this.voice.speak(speechResp);
       }
 
@@ -403,9 +435,19 @@ class SmartLearningApp {
       }
 
     } catch (err) {
+      console.error(`❌ Backend error: ${err.name} - ${err.message}`);
       if (err.name === "TimeoutError") {
-        this._showError("Request timed out. The AI is slow — please try again.");
+        const msg = "Request timed out. Backend is not responding. Check if Flask server is running.";
+        console.error(msg);
+        this._showError(msg);
+      } else if (err.message.includes("Failed to fetch")) {
+        const msg = "Cannot reach backend. Make sure Flask server is running on http://localhost:5000";
+        console.error(msg);
+        this._backendOnline = false;
+        this._updateApiStatus(false);
+        this._showError(msg);
       } else {
+        console.error(`Backend error: ${err.message}`);
         this._backendOnline = false;
         this._updateApiStatus(false);
         await this._offlineFallback(message);
@@ -558,13 +600,22 @@ class SmartLearningApp {
 
   _displayResponse(text) {
     if (this.$response) {
-      this.$response.textContent = text;
+      // Ensure we always have text
+      const displayText = text || "(No response text)";
+      this.$response.textContent = displayText;
+      console.log(`📱 UI Response updated: "${displayText.substring(0, 50)}..."`);
+    } else {
+      console.warn("⚠️ Response element ($response) not found in DOM");
     }
   }
 
   _showError(msg) {
+    console.error(`🚨 ERROR: ${msg}`);
     this._displayResponse(`⚠️ ${msg}`);
     this._setStatus("idle", "Error — try again");
+    if (this.adapter.getMode() !== "hearing-impaired") {
+      this.voice.speak(`Error: ${msg}`);
+    }
   }
 }
 
