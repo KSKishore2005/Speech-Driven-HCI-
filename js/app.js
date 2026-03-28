@@ -1,0 +1,576 @@
+// ============================================================
+// app.js — Main App v2 (Backend + OpenAI + Enhanced Voice)
+// Smart Learning Assistant
+// ============================================================
+
+import { VoiceEngine } from "./voice.js";
+import { AdaptiveEngine } from "./adapter.js";
+import { QuizEngine } from "./quiz.js";
+
+// ── Config ────────────────────────────────────────────────────
+const API_BASE    = "http://localhost:5000";
+const SESSION_ID  = `sess_${Date.now()}`;
+
+// ── App States ────────────────────────────────────────────────
+const STATE = {
+  IDLE: "idle",
+  WELCOMING: "welcoming",
+  WAITING: "waiting",
+  PROCESSING: "processing",
+  QUIZZING: "quizzing",
+};
+
+class SmartLearningApp {
+  constructor() {
+    this.voice   = new VoiceEngine();
+    this.adapter = new AdaptiveEngine();
+    this.quiz    = new QuizEngine(this.voice, (e) => this._onQuizEvent(e));
+
+    this.state          = STATE.IDLE;
+    this.currentLesson  = null;
+    this.currentSubject = null;
+    this._backendOnline = false;
+
+    // Stats for ability detection
+    this._stats = {
+      voiceAttempts: 0,
+      textAttempts:  0,
+      clickCount:    0,
+      startTime:     Date.now(),
+    };
+
+    this._bindDOM();
+    this._bindVoiceEvents();
+    this._bindAdapterEvents();
+    this._start();
+  }
+
+  // ── DOM Bindings ─────────────────────────────────────────────
+  _bindDOM() {
+    this.$orb         = document.getElementById("voice-orb");
+    this.$micBtn      = document.getElementById("mic-btn");
+    this.$textInput   = document.getElementById("text-input");
+    this.$sendBtn     = document.getElementById("send-btn");
+    this.$transcript  = document.getElementById("transcript-text");
+    this.$response    = document.getElementById("response-text");
+    this.$caption     = document.getElementById("caption-bar");
+    this.$subjectGrid = document.getElementById("subject-grid");
+    this.$lessonPanel = document.getElementById("lesson-panel");
+    this.$quizPanel   = document.getElementById("quiz-panel");
+    this.$statusDot   = document.getElementById("status-dot");
+    this.$statusLabel = document.getElementById("status-label");
+    this.$modeSelector = document.getElementById("mode-selector");
+    this.$apiStatus   = document.getElementById("api-status");
+
+    // Mic button
+    this.$micBtn?.addEventListener("click", () => {
+      this._stats.clickCount++;
+      this.adapter.recordClick();
+      if (this.voice.isListening) {
+        this.voice.stopListening();
+      } else {
+        this._activateMic();
+      }
+    });
+
+    // Text send
+    this.$sendBtn?.addEventListener("click", () => this._sendText());
+    this.$textInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this._sendText(); }
+    });
+    this.$textInput?.addEventListener("input", () => {
+      this._stats.textAttempts++;
+      this.adapter.recordTextAttempt();
+    });
+
+    // Mode selector
+    this.$modeSelector?.addEventListener("change", (e) => {
+      const mode = e.target.value;
+      this.adapter.setMode(mode, "manual");
+      this.voice.adaptForMode(mode);
+      if (mode !== "hearing-impaired") {
+        this.voice.speak(this.adapter.getAnnouncement(mode));
+      }
+    });
+
+    // Keyboard shortcut: Space = mic
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" && document.activeElement?.tagName !== "INPUT"
+          && document.activeElement?.tagName !== "TEXTAREA"
+          && document.activeElement?.tagName !== "SELECT"
+          && document.activeElement?.tagName !== "BUTTON") {
+        e.preventDefault();
+        this.$micBtn?.click();
+      }
+    });
+
+    // Build subject grid from backend (or fallback to static)
+    this._loadSubjects();
+  }
+
+  // ── Load Subjects (from backend or static fallback) ──────────
+  async _loadSubjects() {
+    if (!this.$subjectGrid) return;
+    try {
+      const res = await fetch(`${API_BASE}/lessons`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = await res.json();
+        this._backendOnline = true;
+        this._updateApiStatus(true);
+        this._buildSubjectGrid(data.subjects);
+        return;
+      }
+    } catch (_) {}
+    this._backendOnline = false;
+    this._updateApiStatus(false);
+    this._buildStaticSubjectGrid();
+  }
+
+  _buildSubjectGrid(subjects) {
+    if (!this.$subjectGrid) return;
+    this.$subjectGrid.innerHTML = "";
+    subjects.forEach((sub) => {
+      const colorMap = { cs: "#6c63ff", math: "#f59e0b", science: "#10b981", english: "#ec4899", gk: "#3b82f6" };
+      const color = colorMap[sub.id] || "#6c63ff";
+      const card = document.createElement("button");
+      card.className = "subject-card";
+      card.id = `subject-${sub.id}`;
+      card.setAttribute("aria-label", `Learn ${sub.title}`);
+      card.style.setProperty("--subject-color", color);
+      card.innerHTML = `
+        <span class="subject-icon">${sub.icon}</span>
+        <span class="subject-title">${sub.title}</span>
+        <span class="subject-lessons">${sub.lesson_count} lesson${sub.lesson_count !== 1 ? "s" : ""}</span>
+      `;
+      card.addEventListener("click", () => {
+        this._stats.clickCount++;
+        this.adapter.recordClick();
+        this._askBackend(`teach me about ${sub.title}`, "text", sub.lessons?.[0]?.id);
+      });
+      this.$subjectGrid.appendChild(card);
+    });
+  }
+
+  _buildStaticSubjectGrid() {
+    const subjects = [
+      { id: "cs",      title: "Computer Science", icon: "💻", color: "#6c63ff", lessons: 3 },
+      { id: "math",    title: "Mathematics",       icon: "📐", color: "#f59e0b", lessons: 2 },
+      { id: "science", title: "Science",           icon: "🔬", color: "#10b981", lessons: 2 },
+      { id: "english", title: "English",           icon: "📝", color: "#ec4899", lessons: 1 },
+      { id: "gk",      title: "General Knowledge", icon: "🌍", color: "#3b82f6", lessons: 1 },
+    ];
+    this._buildSubjectGrid(subjects.map(s => ({ ...s, lesson_count: s.lessons })));
+  }
+
+  _updateApiStatus(online) {
+    if (!this.$apiStatus) return;
+    this.$apiStatus.textContent = online ? "🟢 AI Connected" : "🟡 Local Mode";
+    this.$apiStatus.style.color = online ? "var(--clr-success)" : "var(--clr-warning)";
+  }
+
+  // ── Voice Events ─────────────────────────────────────────────
+  _bindVoiceEvents() {
+    this.voice.onTranscript = ({ interim, final, isFinal }) => {
+      if (this.$transcript) {
+        this.$transcript.textContent = isFinal ? `🎤 You: "${final}"` : `🎤 ${interim || "Listening…"}`;
+      }
+      if (this.$caption) {
+        this.$caption.textContent = isFinal ? final : interim;
+        this.$caption.classList.toggle("visible", !!(interim || final));
+      }
+      if (isFinal && final.trim()) {
+        this._stats.voiceAttempts++;
+        this.adapter.recordVoiceAttempt();
+        this._handleInput(final.trim(), "voice");
+      }
+    };
+
+    this.voice.onListenStart = () => {
+      this.$orb?.classList.add("listening");
+      this.$micBtn?.classList.add("active");
+      this.$micBtn?.setAttribute("aria-pressed", "true");
+      this._setStatus("listening", "🎤 Listening…");
+    };
+
+    this.voice.onListenEnd = () => {
+      this.$orb?.classList.remove("listening");
+      this.$micBtn?.classList.remove("active");
+      this.$micBtn?.setAttribute("aria-pressed", "false");
+      if (this.$caption) this.$caption.classList.remove("visible");
+      // Don't override if still processing
+      if (this.state !== STATE.PROCESSING) {
+        this._setStatus("idle", "Ready");
+      }
+    };
+
+    this.voice.onSpeakStart = (text) => {
+      this.$orb?.classList.add("speaking");
+      this._displayResponse(text);
+      this._setStatus("speaking", "🔊 Speaking…");
+    };
+
+    this.voice.onSpeakEnd = () => {
+      this.$orb?.classList.remove("speaking");
+      if (this.state !== STATE.PROCESSING) {
+        this._setStatus("idle", "Click 🎤 or type to continue");
+      }
+    };
+
+    this.voice.onStatusChange = (msg) => {
+      this._setStatus(null, msg);
+    };
+
+    this.voice.onError = (err) => {
+      const messages = {
+        "not-allowed":         "Microphone access denied. Please allow mic in browser settings.",
+        "no-speech":           "No speech detected. Try again.",
+        "network":             "Network error with speech recognition.",
+        "audio-capture":       "No microphone found. Please connect a microphone.",
+        "service-not-allowed": "Speech service not allowed. Try Chrome browser.",
+      };
+      const msg = messages[err] || `Voice error: ${err}`;
+      this._showError(msg);
+    };
+  }
+
+  _bindAdapterEvents() {
+    this.adapter.onModeChange(({ mode, reason }) => {
+      this.voice.adaptForMode(mode);
+      if (reason === "auto-detected") {
+        const msg = this.adapter.getAnnouncement(mode);
+        this._displayResponse(`🎯 ${msg}`);
+        if (mode !== "hearing-impaired") {
+          this.voice.speak(msg);
+        }
+      }
+    });
+  }
+
+  // ── App Start ─────────────────────────────────────────────────
+  async _start() {
+    this.state = STATE.WELCOMING;
+    this.adapter.setMode("normal");
+
+    if (!this.voice.isSupported) {
+      this._displayResponse(
+        "⚠️ Your browser doesn't support voice features. Please use Google Chrome for the full experience. You can still type your questions below."
+      );
+      return;
+    }
+
+    // Check backend connectivity
+    await this._checkBackend();
+
+    await new Promise(r => setTimeout(r, 600));
+
+    const welcome = this._backendOnline
+      ? "Welcome to the Smart Learning Assistant! I'm powered by AI and can answer any question you have. Choose a subject or ask me anything — like 'explain photosynthesis' or 'what is machine learning'. How can I help you today?"
+      : "Welcome to the Smart Learning Assistant! I can teach you Computer Science, Mathematics, Science, English, and General Knowledge. Note: The AI backend is not connected, so I'll use my built-in knowledge. How can I help you today?";
+
+    this._displayResponse(welcome);
+    await this.voice.speak(welcome);
+    this.state = STATE.WAITING;
+    this.voice.autoListenAfterSpeak = false;
+  }
+
+  async _checkBackend() {
+    try {
+      const res = await fetch(`${API_BASE}/`, { signal: AbortSignal.timeout(2000) });
+      this._backendOnline = res.ok;
+    } catch (_) {
+      this._backendOnline = false;
+    }
+    this._updateApiStatus(this._backendOnline);
+  }
+
+  // ── Input Handling ────────────────────────────────────────────
+  _sendText() {
+    const text = this.$textInput?.value?.trim();
+    if (!text) return;
+    if (this.$textInput) this.$textInput.value = "";
+    this._stats.textAttempts++;
+    this.adapter.recordTextAttempt();
+    this._handleInput(text, "text");
+  }
+
+  _activateMic() {
+    if (this.adapter.getMode() === "hearing-impaired") {
+      this._showError("Voice input is disabled in Hearing Impaired mode.");
+      return;
+    }
+    this.voice.startListening();
+  }
+
+  async _handleInput(text, source) {
+    if (!text || this.state === STATE.PROCESSING) return;
+
+    // Show what user said
+    if (this.$transcript && source === "voice") {
+      this.$transcript.textContent = `🎤 You: "${text}"`;
+    }
+
+    // Quiz answer handling
+    if (this.quiz.isActive() && this.quiz.isAwaitingAnswer()) {
+      const answerMap = { a: 0, b: 1, c: 2, d: 3, "1": 0, "2": 1, "3": 2, "4": 3 };
+      const lower = text.toLowerCase().trim();
+      const ordinals = { first: 0, one: 0, second: 1, two: 1, third: 2, three: 2, fourth: 3, four: 3 };
+
+      let ansIdx = answerMap[lower];
+      if (ansIdx === undefined) {
+        for (const [k, v] of Object.entries(ordinals)) {
+          if (lower.startsWith(k)) { ansIdx = v; break; }
+        }
+      }
+      if (ansIdx !== undefined) {
+        await this.quiz.handleAnswer(ansIdx);
+        return;
+      }
+      if (lower.includes("repeat") || lower.includes("again")) {
+        await this.quiz.repeatQuestion();
+        return;
+      }
+    }
+
+    await this._askBackend(text, source);
+  }
+
+  // ── Backend API Call ──────────────────────────────────────────
+  async _askBackend(message, source = "text", lessonId = null) {
+    this.state = STATE.PROCESSING;
+    this._setStatus("processing", "⏳ Thinking…");
+    this.voice.stopSpeaking();
+
+    // Thinking indicator
+    this._displayResponse("⏳ Let me think about that…");
+
+    const mode = source === "voice"
+      ? "voice"
+      : this.adapter.getMode() === "normal" ? "text" : this.adapter.getMode();
+
+    const body = {
+      message,
+      mode,
+      session_id:    SESSION_ID,
+      lesson_id:     lessonId || this.currentLesson?.id || null,
+      voice_attempts: this._stats.voiceAttempts,
+      text_attempts:  this._stats.textAttempts,
+      total_time_ms:  Date.now() - this._stats.startTime,
+      click_count:    this._stats.clickCount,
+    };
+
+    try {
+      if (!this._backendOnline) {
+        // Offline fallback
+        await this._offlineFallback(message);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/ask`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(body),
+        signal:  AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Update adaptive mode if backend detected something different
+      if (data.ui_mode && data.ui_mode !== "normal" && this.adapter.getMode() === "normal") {
+        this.adapter.setMode(data.ui_mode, "auto-detected");
+      }
+
+      // Store lesson context
+      if (data.lesson) {
+        this.currentLesson  = data.lesson;
+        this.currentSubject = data.lesson.subject_id;
+        this._showLessonPanel(data.lesson);
+      }
+
+      const textResp   = data.response        || "I couldn't generate a response. Please try again.";
+      const speechResp = data.speech_response || textResp;
+
+      this._displayResponse(textResp);
+
+      // Speak if not in hearing-impaired mode
+      if (this.adapter.getMode() !== "hearing-impaired") {
+        await this.voice.speak(speechResp);
+      }
+
+      // If intent was quiz, start quiz
+      if (data.intent === "quiz" && this.currentLesson) {
+        await this._startQuiz(this.currentLesson);
+      }
+
+    } catch (err) {
+      if (err.name === "TimeoutError") {
+        this._showError("Request timed out. The AI is slow — please try again.");
+      } else {
+        this._backendOnline = false;
+        this._updateApiStatus(false);
+        await this._offlineFallback(message);
+      }
+    } finally {
+      this.state = STATE.WAITING;
+      this._setStatus("idle", "Ready");
+    }
+  }
+
+  async _offlineFallback(message) {
+    const lower = message.toLowerCase();
+    let response = "";
+
+    if (lower.match(/hello|hi|hey/)) {
+      response = "Hello! I'm your Smart Learning Assistant. You can ask me to explain any topic, or choose a subject from the grid. The AI backend is offline, but I'll do my best!";
+    } else if (lower.match(/computer|programming|coding|cpu/)) {
+      response = "Computer Science is fascinating! A computer processes data using its CPU (Central Processing Unit), stores it in memory, and shows results through output devices. Would you like to take a quiz on this?";
+    } else if (lower.match(/photosynthesis|plant|chlorophyll/)) {
+      response = "Photosynthesis is the process by which plants convert sunlight, water, and carbon dioxide into glucose and oxygen. It happens in the chloroplast using chlorophyll. It's the foundation of almost all life on Earth!";
+    } else if (lower.match(/help|what can/)) {
+      response = "I can teach you about Computer Science, Mathematics, Science, English, and General Knowledge. Say 'explain photosynthesis', 'quiz me', or choose a subject card!";
+    } else {
+      response = `Great question! I'd love to answer "${message}" — but the AI backend isn't connected right now. Please set up your OpenAI API key in the backend .env file and start the Flask server to unlock full AI answering.`;
+    }
+
+    this._displayResponse(response);
+    if (this.adapter.getMode() !== "hearing-impaired") {
+      await this.voice.speak(response);
+    }
+  }
+
+  // ── Quiz ──────────────────────────────────────────────────────
+  async _startQuiz(lesson) {
+    this.state = STATE.QUIZZING;
+    if (this.$quizPanel) this.$quizPanel.classList.add("active");
+    await this.quiz.startQuiz(lesson);
+  }
+
+  _onQuizEvent({ type, data }) {
+    const panel = this.$quizPanel;
+    if (!panel) return;
+
+    switch (type) {
+      case "quiz_start":
+        panel.classList.add("active");
+        panel.innerHTML = `
+          <div class="quiz-header">
+            <h2>🧪 Quiz: ${data.lesson.title}</h2>
+            <span class="quiz-progress" id="quiz-progress">Q 1/${data.total}</span>
+          </div>
+          <div id="quiz-question-area"></div>
+        `;
+        break;
+
+      case "question": {
+        const qa = document.getElementById("quiz-question-area");
+        if (!qa) break;
+        const letters = ["A", "B", "C", "D"];
+        document.getElementById("quiz-progress")?.textContent && (
+          document.getElementById("quiz-progress").textContent = `Q ${data.index + 1}/${data.total}`
+        );
+        qa.innerHTML = `
+          <div class="quiz-question">${data.question}</div>
+          <div class="quiz-options">
+            ${data.options.map((opt, i) => `
+              <button class="quiz-option" id="qopt-${i}"
+                aria-label="Option ${letters[i]}: ${opt}"
+                onclick="app.quiz.handleAnswer(${i})">
+                <span class="option-letter">${letters[i]}</span>
+                <span class="option-text">${opt}</span>
+              </button>
+            `).join("")}
+          </div>
+          <div class="quiz-hint">💡 Say A, B, C or D — or click an option</div>
+        `;
+        break;
+      }
+
+      case "answer": {
+        document.querySelectorAll(".quiz-option").forEach((el, i) => {
+          el.disabled = true;
+          if (i === data.correct_index) el.classList.add("correct");
+          else if (i === data.selected && !data.correct) el.classList.add("wrong");
+        });
+        break;
+      }
+
+      case "quiz_end": {
+        const qa = document.getElementById("quiz-question-area");
+        if (!qa) break;
+        const emoji = data.percentage >= 80 ? "🏆" : data.percentage >= 50 ? "👍" : "📚";
+        qa.innerHTML = `
+          <div class="quiz-result">
+            <div class="result-emoji">${emoji}</div>
+            <div class="result-score">${data.score} / ${data.total}</div>
+            <div class="result-percent">${data.percentage}%</div>
+            <p>${data.message}</p>
+            <div class="result-actions">
+              <button class="btn-primary" onclick="location.reload()">🔄 Restart</button>
+              <button class="btn-success" onclick="app._askBackend('teach me something new')">📖 Learn More</button>
+            </div>
+          </div>
+        `;
+        this.state = STATE.WAITING;
+        break;
+      }
+    }
+  }
+
+  // ── Lesson Panel ──────────────────────────────────────────────
+  _showLessonPanel(lesson) {
+    if (!this.$lessonPanel) return;
+    const colorMap = { cs: "#6c63ff", math: "#f59e0b", science: "#10b981", english: "#ec4899", gk: "#3b82f6" };
+    const color = colorMap[lesson.subject_id] || "#6c63ff";
+    const iconMap = { cs: "💻", math: "📐", science: "🔬", english: "📝", gk: "🌍" };
+    const icon  = iconMap[lesson.subject_id] || "📚";
+
+    this.$lessonPanel.classList.add("active");
+    this.$lessonPanel.innerHTML = `
+      <div class="lesson-header" style="border-color:${color}">
+        <span class="lesson-subject-icon">${icon}</span>
+        <div>
+          <div class="lesson-subject-name">${lesson.subject_title || ""}</div>
+          <h2 class="lesson-title" id="lesson-heading">${lesson.title}</h2>
+        </div>
+      </div>
+      <p class="lesson-summary">${lesson.summary}</p>
+      ${lesson.key_points?.length ? `
+      <div class="lesson-keypoints">
+        <h3>Key Points</h3>
+        <ul>${lesson.key_points.map(kp => `<li>${kp}</li>`).join("")}</ul>
+      </div>` : ""}
+      <div class="lesson-actions">
+        <button class="btn-primary" onclick="app._askBackend('repeat the lesson on ${lesson.title}')" aria-label="Repeat lesson">🔁 Repeat</button>
+        <button class="btn-success" onclick="app._startQuiz(app.currentLesson)" aria-label="Take quiz">🎯 Quiz Me</button>
+      </div>
+    `;
+  }
+
+  // ── UI Helpers ────────────────────────────────────────────────
+  _setStatus(state, label) {
+    if (this.$statusDot && state) {
+      this.$statusDot.className = `status-dot ${state}`;
+    }
+    if (this.$statusLabel && label) {
+      this.$statusLabel.textContent = label;
+    }
+  }
+
+  _displayResponse(text) {
+    if (this.$response) {
+      this.$response.textContent = text;
+    }
+  }
+
+  _showError(msg) {
+    this._displayResponse(`⚠️ ${msg}`);
+    this._setStatus("idle", "Error — try again");
+  }
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+let app;
+window.addEventListener("DOMContentLoaded", () => {
+  app = new SmartLearningApp();
+  window.app = app;
+});

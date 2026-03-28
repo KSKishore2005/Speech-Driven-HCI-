@@ -1,0 +1,332 @@
+/* ============================================================
+   themes.css — Adaptive Accessibility Themes
+   Smart Learning Assistant
+   ============================================================ */
+
+/* ── Visually Impaired Mode ─────────────────────────────────── */
+[data-mode="visually-impaired"] {
+  --font-size-base: 20px;
+  --btn-min-size: 68px;
+}
+
+[data-mode="visually-impaired"] body,
+[data-mode="visually-impaired"] {
+  font-size: var(--font-size-base);
+}
+
+[data-mode="visually-impaired"] .app-header {
+  background: #0a0a12;
+  border-bottom: 3px solid #f59e0b;
+}
+
+[data-mode="visually-impaired"] .brand-text h1 {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-mode="visually-impaired"] #voice-orb .orb-core {
+  background: linear-gradient(135deg, #f59e0b, #ef4444, #f59e0b);
+  box-shadow: 0 0 60px rgba(245, 158, 11, 0.6);
+  font-size: 2.5rem;
+}
+
+[data-mode="visually-impaired"] #voice-orb .orb-ring-1 {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+[data-mode="visually-impaired"] #voice-orb .orb-ring-2 {
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-mode="visually-impaired"] .orb-container::before {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 70%);
+  opacity: 1;
+}
+
+[data-mode="visually-impaired"] #response-text {
+  font-size: 1.25rem;
+  line-height: 1.9;
+  color: #ffffff;
+}
+
+[data-mode="visually-impaired"] .subject-card {
+  padding: 20px 12px;
+  border-bottom-width: 4px;
+}
+
+[data-mode="visually-impaired"] .subject-icon { font-size: 2rem; }
+[data-mode="visually-impaired"] .subject-title { font-size: 1rem; font-weight: 700; }
+
+[data-mode="visually-impaired"] #mic-btn {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #f59e0b;
+  width: 68px;
+  height: 68px;
+  font-size: 1.6rem;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+[data-mode="visually-impaired"] #mic-btn:hover {
+  background: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+}
+
+[data-mode="visually-impaired"] #mic-btn.active {
+  background: #f59e0b;
+  color: #000;
+}
+
+[data-mode="visually-impaired"] #send-btn {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+
+[data-mode="visually-impaired"] .quiz-option {
+  font-size: 1.1rem;
+  min-height: 64px;
+  border-width: 2px;
+}
+
+[data-mode="visually-impaired"] .btn-primary,
+[data-mode="visually-impaired"] .btn-success {
+  font-size: 1rem;
+  padding: 14px 24px;
+}
+
+[data-mode="visually-impaired"] *:focus {
+  outline: 3px solid #f59e0b !important;
+  outline-offset: 4px !important;
+}
+
+/* Auto-focus mic on mode switch */
+[data-mode="visually-impaired"] #caption-bar {
+  font-size: 1.3rem;
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid #f59e0b;
+}
+
+/* ── Hearing Impaired Mode ──────────────────────────────────── */
+[data-mode="hearing-impaired"] {
+  --font-size-base: 16px;
+  --btn-min-size: 48px;
+}
+
+[data-mode="hearing-impaired"] .app-header {
+  border-bottom: 3px solid #10b981;
+}
+
+[data-mode="hearing-impaired"] .brand-text h1 {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-mode="hearing-impaired"] #voice-orb .orb-core {
+  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+}
+
+[data-mode="hearing-impaired"] .orb-container::before {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+  opacity: 1;
+}
+
+/* Huge caption bar for hearing impaired */
+[data-mode="hearing-impaired"] #caption-bar {
+  position: static;
+  transform: none;
+  opacity: 1;
+  background: var(--clr-surface-2);
+  border: 2px solid #10b981;
+  border-radius: var(--radius-lg);
+  font-size: 1.2rem;
+  padding: var(--space-md) var(--space-lg);
+  max-width: 100%;
+  color: #10b981;
+  margin-top: var(--space-md);
+  display: block;
+}
+
+/* Hide mic in hearing impaired mode since they prefer text */
+[data-mode="hearing-impaired"] #mic-btn {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+[data-mode="hearing-impaired"] #response-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  border-left: 4px solid #10b981;
+  padding-left: var(--space-md);
+}
+
+[data-mode="hearing-impaired"] .response-label::before {
+  background: #10b981;
+}
+[data-mode="hearing-impaired"] .response-label {
+  color: #10b981;
+}
+
+[data-mode="hearing-impaired"] *:focus {
+  outline: 3px solid #10b981 !important;
+  outline-offset: 3px !important;
+}
+
+[data-mode="hearing-impaired"] .transcript-panel {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+[data-mode="hearing-impaired"] #transcript-text {
+  font-size: 1rem;
+  color: #34d399;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Text input more prominent */
+[data-mode="hearing-impaired"] #text-input {
+  border-color: rgba(16, 185, 129, 0.4);
+  font-size: 1rem;
+}
+
+[data-mode="hearing-impaired"] #text-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+[data-mode="hearing-impaired"] #send-btn {
+  background: linear-gradient(135deg, #10b981, #0ea5e9);
+}
+
+/* ── Motor Impaired Mode ────────────────────────────────────── */
+[data-mode="motor-impaired"] {
+  --font-size-base: 22px;
+  --btn-min-size: 80px;
+}
+
+[data-mode="motor-impaired"] .app-header {
+  border-bottom: 3px solid #ef4444;
+  padding: var(--space-lg) var(--space-xl);
+}
+
+[data-mode="motor-impaired"] .brand-text h1 {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-mode="motor-impaired"] #voice-orb .orb-core {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 0 60px rgba(239, 68, 68, 0.5);
+  font-size: 2.8rem;
+}
+
+[data-mode="motor-impaired"] #voice-orb {
+  width: 180px;
+  height: 180px;
+}
+
+[data-mode="motor-impaired"] .orb-core {
+  inset: 24px !important;
+}
+
+[data-mode="motor-impaired"] .orb-container::before {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%);
+  opacity: 1;
+}
+
+[data-mode="motor-impaired"] #mic-btn {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+[data-mode="motor-impaired"] #mic-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+}
+
+[data-mode="motor-impaired"] #mic-btn.active {
+  background: #ef4444;
+  color: white;
+}
+
+[data-mode="motor-impaired"] #send-btn {
+  width: 80px;
+  height: 80px;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+}
+
+[data-mode="motor-impaired"] #text-input {
+  font-size: 1.1rem;
+  padding: 16px 20px;
+}
+
+[data-mode="motor-impaired"] .subject-card {
+  min-height: 90px;
+  font-size: 1rem;
+  padding: var(--space-lg) var(--space-md);
+}
+
+[data-mode="motor-impaired"] .subject-icon { font-size: 2.2rem; }
+[data-mode="motor-impaired"] .subject-title { font-size: 1rem; font-weight: 700; }
+
+[data-mode="motor-impaired"] .quiz-option {
+  min-height: 80px;
+  font-size: 1.1rem;
+  padding: var(--space-lg) var(--space-xl);
+  border-width: 2px;
+}
+
+[data-mode="motor-impaired"] .quiz-option:hover:not(:disabled) {
+  transform: translateX(8px);
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+[data-mode="motor-impaired"] .btn-primary,
+[data-mode="motor-impaired"] .btn-success {
+  min-height: 80px;
+  font-size: 1.1rem;
+  padding: 16px 28px;
+}
+
+[data-mode="motor-impaired"] *:focus {
+  outline: 4px solid #ef4444 !important;
+  outline-offset: 4px !important;
+}
+
+[data-mode="motor-impaired"] #response-text {
+  font-size: 1.3rem;
+  line-height: 1.8;
+}
+
+/* ── High Contrast Override (all modes) ─────────────────────── */
+body.high-contrast {
+  --clr-bg: #000000;
+  --clr-surface: #0a0a0a;
+  --clr-surface-2: #111111;
+  --clr-text: #ffffff;
+  --clr-text-muted: #dddddd;
+  --clr-border: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Large Font Override ─────────────────────────────────────── */
+body.large-font {
+  --font-size-base: 20px;
+}
+
+/* Mode transition animation */
+[data-mode] .app-header,
+[data-mode] #voice-orb .orb-core,
+[data-mode] #mic-btn,
+[data-mode] #send-btn {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

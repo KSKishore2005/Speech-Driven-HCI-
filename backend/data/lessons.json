@@ -1,0 +1,288 @@
+{
+  "subjects": [
+    {
+      "id": "cs",
+      "title": "Computer Science",
+      "icon": "💻",
+      "lessons": [
+        {
+          "id": "cs_1",
+          "title": "What is a Computer?",
+          "summary": "A computer is an electronic device that processes data.",
+          "content": "A computer is an electronic device that processes data and produces meaningful results. It takes input from the user, processes it using the CPU, stores data in memory, and displays output. The four main functions of a computer are: Input, Processing, Storage, and Output. Modern computers are used in almost every field — from education to medicine to entertainment.",
+          "key_points": [
+            "Computers process data electronically",
+            "Four functions: Input, Process, Store, Output",
+            "CPU is the brain of the computer",
+            "Used in every major industry"
+          ],
+          "keywords": ["computer", "what is computer", "cpu", "processor", "input output"],
+          "quiz": [
+            {
+              "question": "What does CPU stand for?",
+              "options": ["Central Processing Unit", "Computer Power Unit", "Central Program Utility", "Core Processing Unit"],
+              "answer": 0,
+              "hint": "It's the brain of the computer"
+            },
+            {
+              "question": "Which of the following is an OUTPUT device?",
+              "options": ["Keyboard", "Mouse", "Monitor", "Scanner"],
+              "answer": 2,
+              "hint": "You see results on it"
+            },
+            {
+              "question": "What are the four main functions of a computer?",
+              "options": ["Run, Jump, Fly, Stop", "Input, Process, Store, Output", "Type, Print, Save, Send", "Open, Close, Edit, Delete"],
+              "answer": 1,
+              "hint": "Think about what happens when you use a computer"
+            }
+          ]
+        },
+        {
+          "id": "cs_2",
+          "title": "Programming Basics",
+          "summary": "Programming is giving instructions to a computer.",
+          "content": "Programming is the process of giving instructions to a computer to perform tasks. A program is a set of step-by-step instructions written in a programming language. Popular languages include Python, JavaScript, Java, and C++. Every program follows a logic: take input, make decisions, repeat actions, and produce output. Learning to program helps you solve real-world problems using computers.",
+          "key_points": [
+            "Programming means giving computers instructions",
+            "Programs are written in programming languages",
+            "Python is beginner-friendly",
+            "Logic: Input → Decision → Loop → Output"
+          ],
+          "keywords": ["programming", "coding", "python", "javascript", "algorithm", "code"],
+          "quiz": [
+            {
+              "question": "Which programming language is known as beginner-friendly?",
+              "options": ["Assembly", "Python", "C++", "Rust"],
+              "answer": 1,
+              "hint": "It's named after a snake"
+            },
+            {
+              "question": "What is a program?",
+              "options": ["A TV show", "A set of instructions for a computer", "A type of hardware", "An operating system"],
+              "answer": 1,
+              "hint": "Think about what you tell a computer to do"
+            }
+          ]
+        },
+        {
+          "id": "cs_3",
+          "title": "Internet and Networking",
+          "summary": "The internet is a global network of connected computers.",
+          "content": "The Internet is a massive global network that connects billions of computers and devices worldwide. It works by sending data as small packets through routers and switches. Key concepts include: IP addresses (unique identifiers for devices), DNS (translates domain names to IPs), HTTP/HTTPS (protocols for web browsing), and bandwidth (speed of data transfer). The World Wide Web is just one part of the internet.",
+          "key_points": [
+            "Internet = global network of computers",
+            "Data travels as packets via routers",
+            "IP address uniquely identifies each device",
+            "HTTP/HTTPS used for web communication"
+          ],
+          "keywords": ["internet", "network", "ip address", "dns", "http", "web", "router"],
+          "quiz": [
+            {
+              "question": "What does IP stand for in networking?",
+              "options": ["Internal Protocol", "Internet Protocol", "Interface Port", "Input Program"],
+              "answer": 1,
+              "hint": "It's how devices identify each other online"
+            },
+            {
+              "question": "What does DNS do?",
+              "options": ["Sends emails", "Translates domain names to IP addresses", "Speeds up internet", "Encrypts data"],
+              "answer": 1,
+              "hint": "It's like a phone book for websites"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "math",
+      "title": "Mathematics",
+      "icon": "📐",
+      "lessons": [
+        {
+          "id": "math_1",
+          "title": "Number Systems",
+          "summary": "Numbers can be represented in different systems.",
+          "content": "A number system is a way to represent numbers using symbols. The Decimal system uses 10 digits (0-9). Computers use Binary (0 and 1). Hexadecimal uses 16 symbols (0-9 and A-F). Octal uses 8 digits (0-7). Converting between these systems is fundamental to computer science.",
+          "key_points": [
+            "Decimal: base 10, digits 0-9",
+            "Binary: base 2, digits 0-1 (used by computers)",
+            "Hexadecimal: base 16, 0-9 and A-F",
+            "Conversions are key in computing"
+          ],
+          "keywords": ["number system", "binary", "decimal", "hexadecimal", "octal", "base"],
+          "quiz": [
+            {
+              "question": "How many digits does the binary number system have?",
+              "options": ["10", "16", "2", "8"],
+              "answer": 2,
+              "hint": "Computers use only zeros and ones"
+            },
+            {
+              "question": "What is the decimal equivalent of binary 1010?",
+              "options": ["8", "10", "12", "14"],
+              "answer": 1,
+              "hint": "1×8 + 0×4 + 1×2 + 0×1"
+            }
+          ]
+        },
+        {
+          "id": "math_2",
+          "title": "Basic Algebra",
+          "summary": "Algebra uses letters to represent unknown numbers.",
+          "content": "Algebra is a branch of mathematics using letters for unknown values. In x + 5 = 10, x represents 5. We solve by isolating the variable. Key concepts: variables (unknowns), constants (fixed numbers), expressions (combination of both), equations (two equal expressions). Algebra is used in physics, engineering, economics, and everyday problem-solving.",
+          "key_points": [
+            "Variables are letters representing unknowns",
+            "Equations show two equal expressions",
+            "Solve by isolating the variable",
+            "Foundation of engineering and science"
+          ],
+          "keywords": ["algebra", "equation", "variable", "solve", "unknown", "expression"],
+          "quiz": [
+            {
+              "question": "If x + 5 = 12, what is x?",
+              "options": ["5", "7", "17", "6"],
+              "answer": 1,
+              "hint": "Subtract 5 from both sides"
+            },
+            {
+              "question": "What is a variable in algebra?",
+              "options": ["A fixed number", "A letter representing an unknown", "A mathematical operation", "A type of graph"],
+              "answer": 1,
+              "hint": "It can change or is unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "title": "Science",
+      "icon": "🔬",
+      "lessons": [
+        {
+          "id": "sci_1",
+          "title": "States of Matter",
+          "summary": "Matter exists as solid, liquid, gas, and plasma.",
+          "content": "Matter is anything with mass and volume. It exists in 4 main states: Solid (particles tightly packed, fixed shape — like ice), Liquid (particles close but flow — like water), Gas (particles spread, no fixed shape — like steam), and Plasma (high-energy ionized gas — found in stars). State changes happen via energy: melting, freezing, evaporation, condensation, sublimation.",
+          "key_points": [
+            "4 states: solid, liquid, gas, plasma",
+            "Particles behave differently in each state",
+            "State changes involve energy transfer",
+            "Plasma is most common in universe"
+          ],
+          "keywords": ["matter", "solid", "liquid", "gas", "plasma", "state", "melting", "freezing"],
+          "quiz": [
+            {
+              "question": "How many main states of matter are there?",
+              "options": ["2", "3", "4", "5"],
+              "answer": 2,
+              "hint": "Solid, liquid, gas, and one more"
+            },
+            {
+              "question": "What happens when water is heated to 100°C?",
+              "options": ["It freezes", "It evaporates", "It becomes plasma", "Nothing"],
+              "answer": 1,
+              "hint": "It turns into steam"
+            }
+          ]
+        },
+        {
+          "id": "sci_2",
+          "title": "Photosynthesis",
+          "summary": "Plants make food using sunlight, water, and CO2.",
+          "content": "Photosynthesis is the process by which plants, algae, and some bacteria convert sunlight, water, and carbon dioxide into glucose and oxygen. The equation is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. It happens in the chloroplasts, specifically using chlorophyll (the green pigment). There are two stages: Light reactions (in thylakoids) and the Calvin cycle (in stroma). Photosynthesis is the foundation of almost all life on Earth.",
+          "key_points": [
+            "Plants use sunlight + water + CO2 → glucose + oxygen",
+            "Happens in chloroplasts using chlorophyll",
+            "Two stages: light reactions and Calvin cycle",
+            "Foundation of most food chains on Earth"
+          ],
+          "keywords": ["photosynthesis", "plant", "chlorophyll", "sunlight", "glucose", "oxygen", "carbon dioxide"],
+          "quiz": [
+            {
+              "question": "What is the main product of photosynthesis?",
+              "options": ["Carbon dioxide", "Glucose and Oxygen", "Water", "Nitrogen"],
+              "answer": 1,
+              "hint": "Plants make food and release something we breathe"
+            },
+            {
+              "question": "Where does photosynthesis take place in a plant cell?",
+              "options": ["Mitochondria", "Nucleus", "Chloroplast", "Cell wall"],
+              "answer": 2,
+              "hint": "It contains chlorophyll and is green"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "english",
+      "title": "English",
+      "icon": "📝",
+      "lessons": [
+        {
+          "id": "eng_1",
+          "title": "Parts of Speech",
+          "summary": "Words are classified into 8 parts of speech.",
+          "content": "English grammar classifies words into 8 parts of speech: Nouns (name people, places, things — book, city), Pronouns (replace nouns — he, she, it), Verbs (show action or state — run, is), Adjectives (describe nouns — beautiful, large), Adverbs (modify verbs — quickly, very), Prepositions (show relationships — in, on, at), Conjunctions (connect clauses — and, but, because), Interjections (express emotion — oh!, wow!).",
+          "key_points": [
+            "8 parts of speech in English",
+            "Nouns name things; Verbs show action",
+            "Adjectives describe nouns; Adverbs modify verbs",
+            "Conjunctions connect ideas and sentences"
+          ],
+          "keywords": ["parts of speech", "noun", "verb", "adjective", "adverb", "pronoun", "grammar", "english"],
+          "quiz": [
+            {
+              "question": "Which part of speech shows action?",
+              "options": ["Noun", "Adjective", "Verb", "Pronoun"],
+              "answer": 2,
+              "hint": "Running, jumping, thinking..."
+            },
+            {
+              "question": "How many parts of speech are there in English?",
+              "options": ["6", "7", "8", "10"],
+              "answer": 2,
+              "hint": "Count: noun, pronoun, verb, adjective, adverb, preposition, conjunction, interjection"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gk",
+      "title": "General Knowledge",
+      "icon": "🌍",
+      "lessons": [
+        {
+          "id": "gk_1",
+          "title": "World Geography",
+          "summary": "Earth has 7 continents and 5 major oceans.",
+          "content": "Earth is divided into 7 continents: Asia (largest), Africa, North America, South America, Antarctica, Europe, and Australia (Oceania). The 5 major oceans are: Pacific (largest and deepest), Atlantic, Indian, Southern, and Arctic. There are 195 countries in the world, home to over 8 billion people. The highest point is Mount Everest (8,849m) and the lowest is the Mariana Trench (−11,034m).",
+          "key_points": [
+            "7 continents, 5 oceans",
+            "Asia is the largest continent",
+            "Pacific is the largest and deepest ocean",
+            "195 countries, 8 billion+ people"
+          ],
+          "keywords": ["geography", "continent", "ocean", "world", "country", "asia", "pacific", "everest"],
+          "quiz": [
+            {
+              "question": "How many continents are on Earth?",
+              "options": ["5", "6", "7", "8"],
+              "answer": 2,
+              "hint": "Asia, Africa, Americas, Antarctica, Europe, Australia"
+            },
+            {
+              "question": "Which is the largest ocean?",
+              "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
+              "answer": 3,
+              "hint": "It covers more than half of Earth's ocean area"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

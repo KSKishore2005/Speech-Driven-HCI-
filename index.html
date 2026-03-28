@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Speech-Driven HCI for Differently-Abled Learners — A voice-first adaptive learning platform that detects user ability and dynamically adjusts the interface for visually impaired, hearing impaired, and motor impaired users." />
+  <meta name="theme-color" content="#6c63ff" />
+  <title>Smart Learning Assistant — Speech-Driven HCI</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <!-- Favicon emoji -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
+</head>
+
+<body>
+  <!-- Accessibility Skip Link -->
+  <a href="#main-input" class="skip-link">Skip to main input</a>
+
+  <div class="app-wrapper">
+
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="app-header" role="banner">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">🧠</div>
+        <div class="brand-text">
+          <h1>Smart Learning Assistant</h1>
+          <p>Speech-Driven HCI for Differently-Abled Learners</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- AI Connection Status -->
+        <span id="api-status" style="font-size:0.75rem; color:var(--clr-text-dim)">🟡 Connecting…</span>
+
+        <!-- Mode Badge -->
+        <div id="mode-badge" role="status" aria-live="polite" aria-label="Current interaction mode">
+          🌐 Standard Mode
+        </div>
+
+        <!-- Manual mode override -->
+        <label for="mode-selector" class="sr-only">Select interaction mode</label>
+        <select id="mode-selector" aria-label="Choose accessibility mode">
+          <option value="normal">🌐 Standard Mode</option>
+          <option value="visually-impaired">👁️ Visually Impaired</option>
+          <option value="hearing-impaired">👂 Hearing Impaired</option>
+          <option value="motor-impaired">✋ Motor Impaired</option>
+        </select>
+
+        <!-- Accessibility toggles -->
+        <button class="btn-icon" id="contrast-btn" title="Toggle High Contrast" aria-label="Toggle high contrast mode" onclick="document.body.classList.toggle('high-contrast')">
+          🌓
+        </button>
+        <button class="btn-icon" id="font-btn" title="Toggle Large Fonts" aria-label="Toggle large font size" onclick="document.body.classList.toggle('large-font')">
+          𝐀
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Status Bar ──────────────────────────────────────── -->
+    <div class="status-bar" role="status" aria-live="polite">
+      <div id="status-dot" class="status-dot idle" aria-hidden="true"></div>
+      <span id="status-label">Click mic or press Space to speak</span>
+      <span style="margin-left:auto; font-size:0.72rem; opacity:0.6">
+        Powered by Web Speech API · Chrome recommended
+      </span>
+    </div>
+
+    <!-- ── Main Content ────────────────────────────────────── -->
+    <main class="main-content" id="main-content" role="main">
+
+      <!-- Left Column: Voice + Interaction -->
+      <div class="voice-section" aria-label="Voice interaction area">
+
+        <!-- Voice Orb -->
+        <div class="orb-container" role="presentation">
+          <div id="voice-orb" role="button" tabindex="0"
+               aria-label="Voice assistant orb. Click to activate microphone."
+               onkeydown="if(event.key==='Enter'||event.key===' '){document.getElementById('mic-btn').click()}">
+            <!-- Wave rings (listening animation) -->
+            <div class="orb-wave" aria-hidden="true"></div>
+            <div class="orb-wave" aria-hidden="true"></div>
+            <div class="orb-wave" aria-hidden="true"></div>
+            <!-- Spinning decorative rings -->
+            <div class="orb-ring orb-ring-1" aria-hidden="true"></div>
+            <div class="orb-ring orb-ring-2" aria-hidden="true"></div>
+            <!-- Core orb -->
+            <div class="orb-core" aria-hidden="true">🎤</div>
+          </div>
+
+          <p style="font-size:0.85rem; color:var(--clr-text-dim); text-align:center; max-width:260px; line-height:1.5">
+            Speak naturally or type below. I'll adapt to your needs automatically.
+          </p>
+        </div>
+
+        <!-- Transcript: what user said -->
+        <div class="transcript-panel" role="log" aria-label="Your speech transcript" aria-live="polite">
+          <div class="transcript-label">🎤 You said</div>
+          <div id="transcript-text" aria-live="polite">Waiting for your voice…</div>
+        </div>
+
+        <!-- Response Panel -->
+        <div class="response-panel" role="region" aria-label="Assistant response">
+          <div class="response-label" aria-hidden="true">Assistant Response</div>
+          <div id="response-text" aria-live="polite" aria-atomic="true">
+            Initializing Smart Learning Assistant… Please wait.
+          </div>
+        </div>
+
+        <!-- Caption bar (embedded for hearing-impaired mode) -->
+        <div id="caption-bar" role="status" aria-live="polite" aria-label="Live caption"></div>
+
+        <!-- Text Input -->
+        <div id="main-input" class="input-section" role="search">
+          <button id="mic-btn" aria-label="Start or stop voice input (Space)" aria-pressed="false">
+            🎤
+          </button>
+          <input
+            id="text-input"
+            type="text"
+            placeholder='Type here or say "help" to get started…'
+            aria-label="Type your message here"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="send-btn" aria-label="Send message">
+            ➤
+          </button>
+        </div>
+
+        <!-- Keyboard hint -->
+        <div class="kbd-hint" aria-hidden="true">
+          Press <kbd>Space</kbd> to activate mic · <kbd>Enter</kbd> to send text
+        </div>
+
+      </div><!-- /voice-section -->
+
+      <!-- Right Column: Sidebar -->
+      <aside class="sidebar" aria-label="Learning content">
+
+        <!-- Subject Grid -->
+        <section class="subjects-section" aria-labelledby="subjects-heading">
+          <div class="section-title" id="subjects-heading">📚 Choose a Subject</div>
+          <div id="subject-grid" role="list" aria-label="Available subjects">
+            <!-- Built dynamically by app.js -->
+          </div>
+        </section>
+
+        <!-- Quick Command Chips -->
+        <section class="quick-cmds" aria-labelledby="cmds-heading">
+          <div class="section-title" id="cmds-heading">⚡ Quick Commands</div>
+          <div class="cmd-chips" role="list">
+            <button class="cmd-chip" role="listitem" aria-label="Say help"
+              onclick="document.getElementById('text-input').value='help'; document.getElementById('send-btn').click()">
+              help
+            </button>
+            <button class="cmd-chip" role="listitem" aria-label="Learn computer science"
+              onclick="document.getElementById('text-input').value='learn computer science'; document.getElementById('send-btn').click()">
+              learn computer science
+            </button>
+            <button class="cmd-chip" role="listitem" aria-label="Learn math"
+              onclick="document.getElementById('text-input').value='learn math'; document.getElementById('send-btn').click()">
+              learn math
+            </button>
+            <button class="cmd-chip" role="listitem" aria-label="Quiz me"
+              onclick="document.getElementById('text-input').value='quiz me'; document.getElementById('send-btn').click()">
+              quiz me
+            </button>
+            <button class="cmd-chip" role="listitem" aria-label="Repeat"
+              onclick="document.getElementById('text-input').value='repeat'; document.getElementById('send-btn').click()">
+              repeat
+            </button>
+            <button class="cmd-chip" role="listitem" aria-label="Next lesson"
+              onclick="document.getElementById('text-input').value='next'; document.getElementById('send-btn').click()">
+              next
+            </button>
+          </div>
+        </section>
+
+        <!-- Lesson Panel (shown after subject selected) -->
+        <section id="lesson-panel" aria-labelledby="lesson-heading" aria-live="polite">
+          <!-- Filled by app.js -->
+        </section>
+
+        <!-- Quiz Panel (shown during quiz) -->
+        <section id="quiz-panel" aria-labelledby="quiz-heading" aria-live="polite">
+          <!-- Filled by app.js -->
+        </section>
+
+        <!-- How It Works card -->
+        <section class="subjects-section" aria-labelledby="how-heading">
+          <div class="section-title" id="how-heading">💡 How It Works</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
+            <div class="hint-row">
+              <span style="font-size:1.3rem">👁️</span>
+              <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--clr-warning)">Visually Impaired</div>
+                <div style="font-size:0.75rem; color:var(--clr-text-dim)">Voice-only — mic auto-activates</div>
+              </div>
+            </div>
+            <div class="hint-row">
+              <span style="font-size:1.3rem">👂</span>
+              <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--clr-success)">Hearing Impaired</div>
+                <div style="font-size:0.75rem; color:var(--clr-text-dim)">Text + captions, no audio needed</div>
+              </div>
+            </div>
+            <div class="hint-row">
+              <span style="font-size:1.3rem">✋</span>
+              <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--clr-error)">Motor Impaired</div>
+                <div style="font-size:0.75rem; color:var(--clr-text-dim)">Voice commands, large targets</div>
+              </div>
+            </div>
+            <div class="hint-row">
+              <span style="font-size:1.3rem">🌐</span>
+              <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--clr-primary)">Standard Mode</div>
+                <div style="font-size:0.75rem; color:var(--clr-text-dim)">Hybrid voice + text</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </aside><!-- /sidebar -->
+
+    </main><!-- /main-content -->
+
+    <!-- ── Footer ──────────────────────────────────────────── -->
+    <footer class="app-footer" role="contentinfo">
+      <span>Smart Learning Assistant</span> ·
+      Speech-Driven HCI for Differently-Abled Learners ·
+      Built with <span>♥</span> using Web Speech API ·
+      Final Year Project 2026
+    </footer>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- Extra inline styles for elements not in CSS -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .btn-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--clr-border);
+      background: var(--clr-surface-2);
+      color: var(--clr-text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover {
+      background: var(--clr-surface-3);
+      border-color: var(--clr-border-hover);
+      color: var(--clr-text);
+    }
+
+    .hint-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--clr-surface-2);
+      border: 1px solid var(--clr-border);
+    }
+
+    /* Orb click interaction */
+    #voice-orb:focus-visible {
+      outline: 3px solid var(--clr-primary);
+      outline-offset: 6px;
+      border-radius: 50%;
+    }
+
+    /* No-JS fallback message */
+    .no-js-warning {
+      display: none;
+      padding: 20px;
+      background: var(--clr-error);
+      color: white;
+      text-align: center;
+      border-radius: 12px;
+      margin: 20px;
+    }
+  </style>
+
+  <!-- Load app as ES module -->
+  <script type="module" src="js/app.js"></script>
+
+  <!-- Fallback for users without JS modules support -->
+  <noscript>
+    <div class="no-js-warning" style="display:block">
+      ⚠️ JavaScript is required to run the Smart Learning Assistant. Please enable JavaScript in your browser.
+    </div>
+  </noscript>
+
+</body>
+</html>
