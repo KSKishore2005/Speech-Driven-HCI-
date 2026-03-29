@@ -112,43 +112,49 @@ export class GestureEngine {
     // 16: RING_FINGER_TIP, 14: RING_FINGER_PIP
     // 20: PINKY_TIP, 18: PINKY_PIP
 
-    // Check if the tip is above (lower Y value) its corresponding PIP
-    const isTipAbovePip = (tip, pip) => landmarks[tip].y < landmarks[pip].y;
+    // --- ROBUST DISTANCE-BASED GESTURE MATH ---
+    // A finger is extended if its TIP is physically further from the WRIST than its PIP joint, regardless of hand rotation.
+    const getDst = (idxA, idxB) => Math.hypot(landmarks[idxA].x - landmarks[idxB].x, landmarks[idxA].y - landmarks[idxB].y);
+    const isExtended = (tip, pip) => getDst(0, tip) > getDst(0, pip) + 0.01;
 
-    const indexExtended = isTipAbovePip(8, 6);
-    const middleExtended = isTipAbovePip(12, 10);
-    const ringExtended = isTipAbovePip(16, 14);
-    const pinkyExtended = isTipAbovePip(20, 18);
+    const indexExtended  = isExtended(8, 6);
+    const middleExtended = isExtended(12, 10);
+    const ringExtended   = isExtended(16, 14);
+    const pinkyExtended  = isExtended(20, 18);
 
-    const indexFolded = !indexExtended;
+    const indexFolded  = !indexExtended;
     const middleFolded = !middleExtended;
-    const ringFolded = !ringExtended;
-    const pinkyFolded = !pinkyExtended;
+    const ringFolded   = !ringExtended;
+    const pinkyFolded  = !pinkyExtended;
+
+    // Thumb check: evaluate thumb extending OUTWARD from palm.
+    // Thumb is open if tip(4) is further away from the pinky base(17) than the Thumb base(2) is.
+    const thumbExtended = getDst(17, 4) > getDst(17, 2) + 0.05;
 
     let gestureObj = null;
 
     // 1. Open Palm (Stop)
+    // 4 major fingers definitely extended
     if (indexExtended && middleExtended && ringExtended && pinkyExtended) {
       gestureObj = "stop"; 
     }
     // 2. Peace Sign (Next / Quiz Me)
-    else if (indexExtended && middleExtended && ringFolded && pinkyFolded) {
+    else if (indexExtended && middleExtended && ringFolded && pinkyFolded && !thumbExtended) {
       gestureObj = "next";
     }
-    // 3. Pointing Up (Help) - only index is extended
-    else if (indexExtended && middleFolded && ringFolded && pinkyFolded) {
+    // 3. Pointing Up (Help)
+    else if (indexExtended && middleFolded && ringFolded && pinkyFolded && !thumbExtended) {
       gestureObj = "help";
     }
     // 4. Thumbs Up and Down
-    // All other fingers should be folded.
-    else if (indexFolded && middleFolded && ringFolded && pinkyFolded) {
-       // Thumbs Up (Yes): Thumb tip is higher (smaller Y) than index knuckle
-       if (landmarks[4].y < landmarks[5].y - 0.05) {
-         gestureObj = "yes";
+    // Fingers strictly folded, thumb strictly extended outward
+    else if (indexFolded && middleFolded && ringFolded && pinkyFolded && thumbExtended) {
+       // Orientation check for thumb
+       if (landmarks[4].y < landmarks[5].y - 0.03) {
+         gestureObj = "yes"; // Thumb tip above index knuckle
        }
-       // Thumbs Down (No): Thumb tip is lower (larger Y) than index knuckle
-       else if (landmarks[4].y > landmarks[5].y + 0.05) {
-         gestureObj = "no";
+       else if (landmarks[4].y > landmarks[5].y + 0.03) {
+         gestureObj = "no"; // Thumb tip below index knuckle
        }
     }
 
