@@ -19,7 +19,7 @@ export class VoiceEngine {
     this._blocked      = false;   // true while TTS is speaking
 
     // Settings (adaptive)
-    this.voiceRate   = 0.9;
+    this.voiceRate   = 1.0;
     this.voicePitch  = 1.0;
     this.voiceVolume = 1.0;
     this.selectedVoice = null;
@@ -87,11 +87,7 @@ export class VoiceEngine {
       this._resetSilenceTimer();
     };
 
-    this.recognition.onspeechend = () => {
-      // User stopped speaking — stop recognition to get final result quickly
-      try { this.recognition.stop(); } catch (_) {}
-    };
-
+    // removed onspeechend stop so it naturally waits for the user if they pause slightly longer
     this.recognition.onend = () => {
       this.isListening = false;
       this._clearSilenceTimer();
@@ -133,15 +129,11 @@ export class VoiceEngine {
   _loadVoices() {
     const voices = this.synthesis.getVoices();
     if (!voices.length) return;
-    const preferred = voices.find(v =>
-      v.lang.startsWith("en") && (
-        v.name.includes("Google") ||
-        v.name.includes("Natural") ||
-        v.name.includes("Enhanced") ||
-        v.name.includes("Zira") ||
-        v.name.includes("David")
-      )
-    );
+    const preferred = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google") && v.name.includes("US"))
+      || voices.find(v => v.lang.startsWith("en") && v.name.includes("Natural"))
+      || voices.find(v => v.lang.startsWith("en") && v.name.includes("Online"))
+      || voices.find(v => v.lang.startsWith("en") && v.name.includes("Google UK English Female"))
+      || voices.find(v => v.lang.startsWith("en") && (v.name.includes("Zira") || v.name.includes("Aria")));
     this.selectedVoice = preferred
       || voices.find(v => v.lang.startsWith("en-US"))
       || voices.find(v => v.lang.startsWith("en"))
@@ -300,7 +292,7 @@ export class VoiceEngine {
         this.autoListenDelay      = 1200;
         break;
       default:
-        this.voiceRate   = 0.9;
+        this.voiceRate   = 1.0;
         this.voicePitch  = 1.0;
         this.voiceVolume = 1.0;
         this.autoListenAfterSpeak = false;

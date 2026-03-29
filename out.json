@@ -1,0 +1,11 @@
+{
+  "intent": "greeting",
+  "lesson": null,
+  "response": "\u274c Error (TypeError): Client.__init__() got an unexpected keyword argume... Please try again.",
+  "speech_response": "I'm sorry, I had a problem. Please try again.",
+  "status": "ok",
+  "subject": "cs",
+  "tokens_used": 0,
+  "ui_mode": "hearing-impaired",
+  "user_type": "hearing_impaired"
+}

@@ -842,6 +842,109 @@ p { color: var(--clr-text-muted); }
   text-align: center;
 }
 
+.footer-links a:hover {
+  color: var(--clr-primary);
+  text-decoration: underline;
+}
+
+/* ── Hand Gesture Widget ────────────────────────────────────── */
+.gesture-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-primary);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  z-index: 999;
+  box-shadow: var(--shadow-lg), 0 0 20px var(--clr-primary-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all var(--dur-normal) var(--ease);
+  transform-origin: bottom right;
+}
+
+.gesture-widget.hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.gesture-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--clr-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#gesture-canvas {
+  width: 240px;
+  height: 180px;
+  border-radius: var(--radius-sm);
+  background: #000;
+  object-fit: cover;
+  border: 1px solid var(--clr-border);
+}
+
+.gesture-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  font-size: 0.75rem;
+  background: var(--clr-surface-2);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  color: var(--clr-text-muted);
+}
+
+.gesture-legend div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gesture-feedback {
+  font-size: 0.85rem;
+  color: var(--clr-accent);
+  text-align: center;
+  font-weight: 600;
+  min-height: 20px;
+}
+
+#gesture-btn {
+  min-width: var(--btn-min-size);
+  min-height: var(--btn-min-size);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--clr-accent);
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--clr-accent);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all var(--dur-normal) var(--ease);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+#gesture-btn:hover {
+  background: rgba(0, 212, 255, 0.25);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+#gesture-btn.active {
+  background: var(--clr-accent);
+  color: white;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+  animation: pulse 1s infinite;
+}
+
 kbd {
   display: inline-block;
   padding: 1px 6px;

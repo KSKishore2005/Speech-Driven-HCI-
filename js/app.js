@@ -6,6 +6,8 @@
 import { VoiceEngine } from "./voice.js";
 import { AdaptiveEngine } from "./adapter.js";
 import { QuizEngine } from "./quiz.js";
+import { GestureEngine } from "./gesture.js";
+import { NLPEngine } from "./nlp.js";
 
 // ── Config ────────────────────────────────────────────────────
 const API_BASE    = "http://localhost:5000";
@@ -25,6 +27,8 @@ class SmartLearningApp {
     this.voice   = new VoiceEngine();
     this.adapter = new AdaptiveEngine();
     this.quiz    = new QuizEngine(this.voice, (e) => this._onQuizEvent(e));
+    this.nlp     = new NLPEngine();
+    this.gesture = new GestureEngine((g) => this._onGesture(g));
 
     this.state          = STATE.IDLE;
     this.currentLesson  = null;
@@ -49,8 +53,11 @@ class SmartLearningApp {
   _bindDOM() {
     this.$orb         = document.getElementById("voice-orb");
     this.$micBtn      = document.getElementById("mic-btn");
+    this.$gestureBtn  = document.getElementById("gesture-btn");
     this.$textInput   = document.getElementById("text-input");
     this.$sendBtn     = document.getElementById("send-btn");
+    this.$gestureWidget= document.getElementById("gesture-widget");
+    this.$gestureFb   = document.getElementById("gesture-feedback");
     this.$transcript  = document.getElementById("transcript-text");
     this.$response    = document.getElementById("response-text");
     this.$caption     = document.getElementById("caption-bar");
@@ -66,10 +73,35 @@ class SmartLearningApp {
     this.$micBtn?.addEventListener("click", () => {
       this._stats.clickCount++;
       this.adapter.recordClick();
-      if (this.voice.isListening) {
+
+      let wasSpeaking = this.voice.isSpeaking;
+      if (wasSpeaking) {
+        this.voice.stopSpeaking();
+      }
+
+      if (this.voice.isListening && !wasSpeaking) {
         this.voice.stopListening();
       } else {
-        this._activateMic();
+        setTimeout(() => this._activateMic(), wasSpeaking ? 150 : 0);
+      }
+    });
+
+    // Gesture button
+    this.$gestureBtn?.addEventListener("click", () => {
+      this._stats.clickCount++;
+      this.adapter.recordClick();
+      if (this.gesture.isActive) {
+        this.gesture.stop();
+        this.$gestureWidget?.classList.add("hidden");
+        this.$gestureBtn?.classList.remove("active");
+        if(this.$gestureFb) this.$gestureFb.textContent = "Camera off";
+      } else {
+        this.$gestureWidget?.classList.remove("hidden");
+        this.$gestureBtn?.classList.add("active");
+        if(this.$gestureFb) this.$gestureFb.textContent = "Initializing camera...";
+        this.gesture.start().then(() => {
+          if(this.$gestureFb) this.$gestureFb.textContent = "Ready: Show gesture";
+        });
       }
     });
 
@@ -320,6 +352,17 @@ class SmartLearningApp {
       return;
     }
 
+    const lowerStr = text.toLowerCase().trim();
+    // Interruption / Stop command override
+    if (this.voice.isSpeaking && (lowerStr === "stop" || lowerStr.includes("stop") || lowerStr === "[gesture] stop")) {
+      console.log("🛑 Audio interrupted by user command");
+      this.voice.stopSpeaking();
+      this._displayResponse("Audio stopped.");
+      this.state = STATE.WAITING;
+      this._setStatus("idle", "Click 🎤 or type to continue");
+      return;
+    }
+
     // Show what user said
     if (this.$transcript && source === "voice") {
       this.$transcript.textContent = `🎤 You: "${text}"`;
@@ -331,12 +374,35 @@ class SmartLearningApp {
       const lower = text.toLowerCase().trim();
       const ordinals = { first: 0, one: 0, second: 1, two: 1, third: 2, three: 2, fourth: 3, four: 3 };
 
+      if (lower.includes("stop") || lower.includes("quit") || lower === "exit" || lower.includes("[gesture] stop")) {
+        console.log("🛑 Quiz interrupted by user");
+        this.quiz.active = false;
+        this.quiz.awaitingAnswer = false;
+        this.state = STATE.WAITING;
+        this._displayResponse("Quiz stopped.");
+        return;
+      }
+
       let ansIdx = answerMap[lower];
       if (ansIdx === undefined) {
         for (const [k, v] of Object.entries(ordinals)) {
-          if (lower.startsWith(k)) { ansIdx = v; break; }
+          if (lower.startsWith(k) || lower.includes("option " + k)) { ansIdx = v; break; }
         }
       }
+
+      // Check if user spoke the actual text of the option
+      if (ansIdx === undefined && this.quiz.questions && this.quiz.questions[this.quiz.currentIndex]) {
+        const q = this.quiz.questions[this.quiz.currentIndex];
+        for (let i = 0; i < q.options.length; i++) {
+          const optLower = q.options[i].toLowerCase().trim();
+          // if option text is "CPU" and user says "CPU" or "the CPU", match it.
+          if (lower.includes(optLower) || optLower === lower) {
+            ansIdx = i;
+            break;
+          }
+        }
+      }
+
       if (ansIdx !== undefined) {
         await this.quiz.handleAnswer(ansIdx);
         return;
@@ -345,6 +411,14 @@ class SmartLearningApp {
         await this.quiz.repeatQuestion();
         return;
       }
+
+      // If we reach here, input was invalid for quiz
+      let errMsg = "I didn't quite catch that. Please say A, B, C, D, or the answer itself.";
+      this._displayResponse(errMsg);
+      if (this.adapter.getMode() !== "hearing-impaired") {
+        await this.voice.speak(errMsg);
+      }
+      return;
     }
 
     await this._askBackend(text, source);
@@ -459,25 +533,61 @@ class SmartLearningApp {
   }
 
   async _offlineFallback(message) {
-    const lower = message.toLowerCase();
-    let response = "";
+    if (!this.nlp) return;
+    const detected = this.nlp.detect(message);
+    let response = this.nlp.generateResponse(detected.intent, detected.subject);
 
-    if (lower.match(/hello|hi|hey/)) {
-      response = "Hello! I'm your Smart Learning Assistant. You can ask me to explain any topic, or choose a subject from the grid. The AI backend is offline, but I'll do my best!";
-    } else if (lower.match(/computer|programming|coding|cpu/)) {
-      response = "Computer Science is fascinating! A computer processes data using its CPU (Central Processing Unit), stores it in memory, and shows results through output devices. Would you like to take a quiz on this?";
-    } else if (lower.match(/photosynthesis|plant|chlorophyll/)) {
-      response = "Photosynthesis is the process by which plants convert sunlight, water, and carbon dioxide into glucose and oxygen. It happens in the chloroplast using chlorophyll. It's the foundation of almost all life on Earth!";
-    } else if (lower.match(/help|what can/)) {
-      response = "I can teach you about Computer Science, Mathematics, Science, English, and General Knowledge. Say 'explain photosynthesis', 'quiz me', or choose a subject card!";
-    } else {
-      response = `Great question! I'd love to answer "${message}" — but the AI backend isn't connected right now. Please set up your OpenAI API key in the backend .env file and start the Flask server to unlock full AI answering.`;
+    if (detected.intent === "learn" && detected.lesson) {
+      this.currentLesson = detected.lesson;
+      this.currentSubject = detected.subject;
+      this._showLessonPanel(detected.lesson);
+      response = `Okay, let's learn about ${detected.lesson.title}. ${detected.lesson.summary} Would you like to take a quiz on this?`;
+    } 
+    else if (detected.intent === "quiz") {
+      if (this.currentLesson) {
+          response = `Starting quiz on ${this.currentLesson.title}!`;
+          this._displayResponse(response);
+          if (this.adapter.getMode() !== "hearing-impaired") {
+             await this.voice.speak(response);
+          }
+          await this._startQuiz(this.currentLesson);
+          return;
+      } else {
+          response = "Please select a subject or ask to learn something first before taking a quiz.";
+      }
     }
 
     this._displayResponse(response);
     if (this.adapter.getMode() !== "hearing-impaired") {
       await this.voice.speak(response);
     }
+  }
+
+  // ── Gesture Handling ──────────────────────────────────────────
+  _onGesture(gesture) {
+    if (this.$gestureFb) {
+      this.$gestureFb.textContent = `Recognized: ${gesture.toUpperCase()}`;
+    }
+    
+    // Map gestures to text inputs
+    let textInput = "";
+    if (gesture === "yes") textInput = "yes";
+    if (gesture === "no") textInput = "no";
+    if (gesture === "help") textInput = "help";
+    if (gesture === "stop") textInput = "stop";
+    if (gesture === "next") textInput = "next";
+    
+    if (textInput) {
+       // Visual hint that gesture was used
+       if (this.$textInput) this.$textInput.value = `[Gesture] ${textInput}`;
+       this._handleInput(textInput, "gesture");
+    }
+    
+    setTimeout(() => {
+       if (this.gesture.isActive && this.$gestureFb) {
+          this.$gestureFb.textContent = "Ready: Show gesture";
+       }
+    }, 2500);
   }
 
   // ── Quiz ──────────────────────────────────────────────────────

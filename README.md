@@ -1,167 +1,90 @@
-# Smart Learning Assistant — Complete Setup Guide
-# =====================================================
+# Speech-Driven Human-Computer Interaction for Differently-Abled Learners
 
-## 🚀 Quick Start (2 Steps)
+Welcome to the **Smart Learning Assistant**, an accessible, multimodal, AI-powered web platform tailored for differently-abled learners. Designed with universal accessibility in mind, this platform allows users to navigate, learn, and test their knowledge intelligently using adaptive interaction modes: voice recognition (Speech-to-Text), real-time hand gesture tracking (MediaPipe natively in-browser), and text fallback.
 
-### Step 1 — Start the Frontend
-```
-npx serve . --listen 5500
-```
-Open: http://localhost:5500
+## 🚀 Key Features
 
-### Step 2 — Start the Backend (New Terminal)
-```
-cd backend
-python app.py
-```
-Backend runs at: http://localhost:5000
+### 1. Adaptive Interaction Modes
+- **Visually-Impaired Mode:** Paced audio responses, highly descriptive text-to-speech without relying on visual abstractions.
+- **Hearing-Impaired Mode:** Suppressed audio narration; text-heavy, highly structured visual UI components and rich transcripts.
+- **Motor-Impaired Mode:** Entirely hands-free interactions! Control the UI effortlessly using your voice or your webcam.
 
----
+### 2. Live MediaPipe Hand Gestures
+For users lacking the ability to speak clearly or use a mouse, the platform employs a real-time floating browser widget tracking hand skeletons via Google MediaPipe. Easily mapped natively to AI inputs:
+- 👍 **Thumbs Up** = Yes 
+- 👎 **Thumbs Down** = No
+- 🖐️ **Open Palm** = Stop Audio / Stop action
+- ✌️ **Peace Sign** = Next / Quiz me
+- ☝️ **Pointing Up** = Help 
 
-## 🔑 Add OpenAI API Key (to unlock AI brain)
+### 3. Smart NLP & AI Fallback Engine
+Driven by a local Flask proxy connecting to API services (`llama-3.1-8b-instant`), the assistant dynamically responds via 4W (What, Why, How, When) structured frameworks. 
+If the API is ever disconnected, an intelligent Local NLP fallback operates immediately in the browser, extracting context and maintaining 100% core offline functionality!
 
-1. Get your key from: https://platform.openai.com/api-keys
-2. Create `backend/.env` file:
-
-```
-OPENAI_API_KEY=sk-your-actual-key-here
-FLASK_PORT=5000
-FLASK_ENV=development
-```
-
-3. Restart Flask: `python app.py`
-4. You'll see: `OpenAI key: ✅ Set`
+### 4. Interactive Quizzing
+The internal quiz engine dynamically builds context surrounding the syllabus context. You can bypass clicking Multiple-Choice options by vocally saying "A, B, C", or simply directly speaking out the actual answer itself—our Engine parses the words and evaluates correctness automatically.
 
 ---
 
-## 📁 Complete Project Structure
-
-```
-smart-learning-assistant/
-│
-├── index.html                  ← Main app (open in browser)
-├── css/
-│   ├── main.css                ← Design system + animations
-│   └── themes.css              ← 4 adaptive themes
-├── js/
-│   ├── app.js                  ← App controller (connects to backend)
-│   ├── voice.js                ← Enhanced TTS + STT engine
-│   ├── adapter.js              ← UI mode switcher
-│   ├── quiz.js                 ← Quiz engine (backend-aware)
-│   ├── nlp.js                  ← Fallback intent detection
-│   └── content.js              ← Static lesson fallback
-│
-└── backend/
-    ├── app.py                  ← Flask app entry point
-    ├── .env                    ← Your API keys (create this!)
-    ├── .env.example            ← Template
-    ├── requirements.txt
-    ├── routes/
-    │   └── api.py              ← All API endpoints
-    ├── services/
-    │   ├── ai_service.py       ← OpenAI GPT-4o
-    │   ├── intent_service.py   ← Intent detection
-    │   ├── content_service.py  ← Lesson lookup
-    │   └── ability_service.py  ← User type detection
-    ├── data/
-    │   └── lessons.json        ← 5 subjects, 9 lessons, 20+ quiz questions
-    └── utils/
-        └── helpers.py          ← Text normalization utilities
-```
+## 💻 Tech Stack
+- **Frontend**: Vanilla Javascript (ES6 features), HTML5, CSS3 Variables (Adaptive UI rendering), Web Speech API.
+- **Gesture CV**: MediaPipe Camera and Hands Utils (CDN).
+- **Backend / Routing**: Python Flask, CORS.
+- **AI Processing**: Groq LLM API.
 
 ---
 
-## 🌐 API Reference (Postman Testing)
+## 🛠️ Setup & Installation
 
-### Health Check
-```
-GET http://localhost:5000/
-```
+### Prerequisites
+- Python 3.10+
+- A valid Groq API Key
 
-### Ask Any Question (Main endpoint)
-```
-POST http://localhost:5000/ask
-Content-Type: application/json
+### Step-by-Step
 
-{
-  "message": "Explain photosynthesis",
-  "mode": "voice",
-  "session_id": "test_session_1"
-}
-```
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/KSKishore2005/Speech-Driven-HCI-.git
+   cd Speech-Driven-HCI-
+   ```
 
-### Get All Lessons
-```
-GET http://localhost:5000/lessons
-```
+2. **Configure the Environment**
+   Navigate to the `backend/` directory and configure the environment files.
+   ```bash
+   cd backend
+   echo "GROQ_API_KEY=your_key_here" > .env
+   ```
 
-### Get Specific Lesson
-```
-GET http://localhost:5000/lessons/sci_2
-```
+3. **Install Dependencies**
+   Install the Python backend server requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Check Quiz Answer
-```
-POST http://localhost:5000/quiz/check
-Content-Type: application/json
-
-{
-  "lesson_id": "cs_1",
-  "question_index": 0,
-  "answer_index": 0
-}
-```
-
-### Detect User Ability
-```
-POST http://localhost:5000/adapt
-Content-Type: application/json
-
-{
-  "mode": "voice",
-  "voice_attempts": 3,
-  "text_attempts": 0
-}
-```
+4. **Launch the Application**
+   You need two terminals running simultaneously:
+   
+   **Terminal 1 (Backend Server):**
+   ```bash
+   cd backend
+   python app.py
+   # Server will start on http://localhost:5000
+   ```
+   
+   **Terminal 2 (Frontend Client):**
+   ```bash
+   cd ..
+   python -m http.server 5500
+   # Navigate to http://localhost:5500 in Google Chrome
+   ```
 
 ---
 
-## 🎯 Voice Commands (say these or type)
+## 🎯 Usage Walkthrough
+1. **Selecting a Mode**: Click the accessibility button on the top-right to pick the interaction mode best suited to the user's needs.
+2. **Asking Questions**: Click the `🎤` Microphone button or press your `Spacebar` and ask, "Please explain photosynthesis". The AI will intelligently answer. 
+3. **Using Gestures**: Click the `✋` Hand button to initialize the camera tracking widget. Hold an Open Palm 🖐️ to forcibly stop the robot speaking mid-sentence.
+4. **Taking Quizzes**: Say "Quiz me on Computer Science" to start an interactive test! Let the application narrate the options and speak your answer directly!
 
-| Command | Effect |
-|---|---|
-| "explain photosynthesis" | AI explains the topic |
-| "teach me computer science" | Opens CS subject |
-| "quiz me" | Starts quiz on current lesson |
-| "next" | Next lesson |
-| "repeat" | Re-reads current lesson |
-| "help" | Lists commands |
-| "A" / "B" / "first" / "second" | Quiz answers |
-
----
-
-## 🧩 4 Adaptive Modes
-
-| Mode | Trigger | Theme |
-|---|---|---|
-| 👁️ Visually Impaired | 2+ voice, 0 text inputs | Gold, large buttons, auto-listen |
-| 👂 Hearing Impaired | 2+ text, 0 voice inputs | Teal, captions, mic hidden |
-| ✋ Motor Impaired | Long idle, minimal input | Red, 80px targets, voice-only |
-| 🌐 Standard | Mixed usage | Purple, voice+text hybrid |
-
----
-
-## 🔧 Voice Input Fixes (v2)
-
-- **Retry logic**: auto-retries 3× on `no-speech` / network errors
-- **Silence detection**: stops listening after 6s of silence
-- **State machine**: prevents mic from firing while TTS is speaking
-- **Chrome bug fix**: watchdog timer prevents TTS from freezing
-- **Auto-listen**: in visually-impaired/motor mode, mic re-opens after each reply
-- **Interim results**: see live transcription while speaking
-
----
-
-## 🏆 Viva Talking Points
-
-> "Our system implements a 4-layer intelligence stack: the frontend captures voice input using the Web Speech API, the Flask backend processes it with NLP intent detection, GPT-4o generates adaptive responses based on user ability type, and the UI dynamically re-themes itself based on behavioral signals — all without any user configuration."
+## License 
+Built for inclusivity. Open-source under MIT bounds.

@@ -114,8 +114,11 @@
 
         <!-- Text Input -->
         <div id="main-input" class="input-section" role="search">
-          <button id="mic-btn" aria-label="Start or stop voice input (Space)" aria-pressed="false">
+          <button id="mic-btn" aria-label="Start or stop voice input (Space)" aria-pressed="false" title="Voice Input">
             🎤
+          </button>
+          <button id="gesture-btn" aria-label="Toggle Hand Gesture Camera" aria-pressed="false" title="Hand Gestures">
+            ✋
           </button>
           <input
             id="text-input"
@@ -296,6 +299,27 @@
       margin: 20px;
     }
   </style>
+
+  <!-- Hand Gesture UI Widget -->
+  <div id="gesture-widget" class="gesture-widget hidden" aria-hidden="true" role="region" aria-label="Camera preview for gestures">
+    <div class="gesture-header">✋ Gesture Tracking</div>
+    <video id="gesture-video" width="320" height="240" autoplay playsinline muted style="display:none;"></video>
+    <canvas id="gesture-canvas" width="320" height="240"></canvas>
+    <div class="gesture-legend">
+      <div>👍 Yes</div>
+      <div>👎 No</div>
+      <div>✌️ Next</div>
+      <div>🖐️ Stop</div>
+      <div>☝️ Help</div>
+    </div>
+    <div class="gesture-feedback" id="gesture-feedback">Camera off</div>
+  </div>
+
+  <!-- MediaPipe dependencies (Pinned for stability) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
 
   <!-- Load app as ES module -->
   <script type="module" src="js/app.js"></script>
