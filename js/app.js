@@ -132,7 +132,7 @@ class SmartLearningApp {
           && document.activeElement?.tagName !== "SELECT"
           && document.activeElement?.tagName !== "BUTTON") {
         e.preventDefault();
-        this.$micBtn?.click();
+        this._handleSpacebarMic();
       }
     });
 
@@ -208,7 +208,13 @@ class SmartLearningApp {
   _bindVoiceEvents() {
     this.voice.onTranscript = ({ interim, final, isFinal }) => {
       if (this.$transcript) {
-        this.$transcript.textContent = isFinal ? `🎤 You: "${final}"` : `🎤 ${interim || "Listening…"}`;
+        if (isFinal) {
+          this.$transcript.textContent = `🎤 You: "${final}"`;
+        } else if (interim) {
+          this.$transcript.textContent = `🎤 ${interim}`;
+        } else if (this.voice.isListening) {
+          this.$transcript.textContent = `🎤 Listening (Speak now)...`;
+        }
       }
       if (this.$caption) {
         this.$caption.textContent = isFinal ? final : interim;
@@ -226,6 +232,7 @@ class SmartLearningApp {
       this.$micBtn?.classList.add("active");
       this.$micBtn?.setAttribute("aria-pressed", "true");
       this._setStatus("listening", "🎤 Listening…");
+      if (this.$transcript) this.$transcript.textContent = "🎤 Listening (Speak now)...";
     };
 
     this.voice.onListenEnd = () => {
@@ -343,6 +350,32 @@ class SmartLearningApp {
       console.error("❌ Failed to start listening");
       this._showError("Failed to start listening. Check microphone permissions.");
     }
+  }
+
+  async _handleSpacebarMic() {
+    this._stats.clickCount++;
+    this.adapter.recordClick();
+
+    if (this.voice.isListening) {
+      this.voice.stopListening();
+      return;
+    }
+
+    if (this.voice.isSpeaking) {
+      this.voice.stopSpeaking();
+    }
+
+    if (this.adapter.getMode() === "hearing-impaired") {
+      this._activateMic();
+      return;
+    }
+
+    const promptText = "I'm ready. Please speak, and let's continue our adaptive learning journey.";
+    this._displayResponse(`🎯 ${promptText}`);
+    if (this.$transcript) this.$transcript.textContent = "🔊 Assistant prompt...";
+    
+    await this.voice.speak(promptText);
+    setTimeout(() => this._activateMic(), 300);
   }
 
   async _handleInput(text, source) {

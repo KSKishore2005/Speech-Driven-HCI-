@@ -99,13 +99,19 @@ export class VoiceEngine {
       this.isListening = false;
       this._clearSilenceTimer();
 
-      const recoverable = ["no-speech", "audio-capture", "network", "aborted"];
+      const recoverable = ["audio-capture", "network", "aborted"];
       const fatal       = ["not-allowed", "service-not-allowed"];
 
       if (fatal.includes(e.error)) {
         this._status(`❌ Mic error: ${e.error}. Check browser permissions.`);
         if (this.onError) this.onError(e.error);
         if (this.onListenEnd) this.onListenEnd();
+        return;
+      }
+      
+      if (e.error === "no-speech") {
+        if (this.onListenEnd) this.onListenEnd();
+        this._status("Listening paused (no speech).");
         return;
       }
 
