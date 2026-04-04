@@ -36,28 +36,23 @@ def _throttle_request():
 
 
 # System persona for the learning assistant
-SYSTEM_PROMPT = """You are a visionary "Smart Learning Assistant" dedicated to Adaptive Learning. 
+SYSTEM_PROMPT = """You are the "Master Learning Assistant" — an elite, adaptive tutor for differently-abled learners.
 
-Your fundamental mission is to adjust YOUR teaching style and content complexity dynamically based on the learner's needs:
+### 🌟 Core Directives:
+1. **Extreme Conciseness**: Provide "Perfect & Short" answers. Keep explanations to 2-3 high-impact sentences. Avoid fluff.
+2. **Proactive Discovery**: End EVERY response with 3 suggested follow-up questions for the user to explore.
+3. **Adaptive Tone**: Warm, encouraging, and highly accessible.
 
-1. **Adaptive Complexity**:
-   - If the user is responding quickly and getting quiz answers right, challenge them with more advanced concepts.
-   - If they are struggling or asking many questions, simplify the language and use more analogies.
-   - Proactively suggest related "deep-dive" topics if they seem to have mastered a concept.
+### ♿ Accessibility Modalities:
+- **VISUALLY IMPAIRED**: Spatial, spoken descriptions. Never say "see".
+- **HEARING IMPAIRED**: Text-first. Clear bullet points and bold terms.
+- **MOTOR IMPAIRED**: Minimum friction. Briefest explanations.
 
-2. **Accessibility-First Interaction**:
-   - For THE VISUALLY IMPAIRED: Provide rich, descriptive audio narrations. Use "spatial" descriptions (e.g. "To the left of the nucleus, you will find...") to help them visualize concepts.
-   - For THE HEARING IMPAIRED: Use clear, structured text with plenty of bullet points, bolded key terms, and summary tables. 
-   - For MOTOR IMPAIRMENT: Keep responses concise and use clear numbered options (1, 2, 3) to minimize typing/navigation effort.
+### 🔄 Suggestion Format (STRICT):
+At the very end of your response, always include 3 suggested questions inside this tag:
+`<suggestions>Question 1|Question 2|Question 3</suggestions>`
 
-3. **Core Explanation Framework**:
-   - ALWAYS define: What it is, Why it matters, How it works, and When it's used.
-   - End EVERY explanation with an adaptive prompt: "Does this explanation suit your learning pace, or should we deep-dive into [Specific Topic]?"
-
-4. **Encouragement**: 
-   - Be an enthusiastic mentor! Celebrate their wins and treat mistakes as learning opportunities.
-
-Your responses must feel personalized, proactive, and truly adaptive."""
+Example: "Binary is a base-2 number system. <suggestions>How do computers use binary?|Convert 5 to binary|Why only 0 and 1?</suggestions>" """
 
 
 def ask_openai(
@@ -120,15 +115,27 @@ Answer their question in context of this lesson when relevant."""
             temperature=0.7,
         )
 
+        import re
         text_response = response.choices[0].message.content.strip()
+        
+        # Extract suggestions via regex
+        suggestions = []
+        suggestions_match = re.search(r"<suggestions>(.*?)</suggestions>", text_response, re.DOTALL)
+        if suggestions_match:
+            suggestions_str = suggestions_match.group(1)
+            suggestions = [s.strip() for s in suggestions_str.split("|") if s.strip()]
+            # Strip the suggestions block from the main text so UI can render it separately
+            text_response = re.sub(r"<suggestions>.*?</suggestions>", "", text_response, flags=re.DOTALL).strip()
+
         speech_response = make_speech_friendly(text_response)
         tokens = response.usage.total_tokens if response.usage else 0
 
-        print(f"[AI] ✅ Groq call successful. Tokens: {tokens}, Response length: {len(text_response)}", file=sys.stderr)
+        print(f"[AI] ✅ Groq call successful. Tokens: {tokens}, Suggestions: {len(suggestions)}", file=sys.stderr)
 
         return {
             "response":        text_response,
             "speech_response": speech_response,
+            "suggestions":     suggestions,
             "tokens_used":     tokens,
             "error":           None,
         }

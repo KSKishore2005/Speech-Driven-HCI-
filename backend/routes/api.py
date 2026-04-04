@@ -132,6 +132,7 @@ def ask():
     return jsonify({
         "response":        ai_result["response"],
         "speech_response": ai_result["speech_response"],
+        "suggestions":     ai_result.get("suggestions", []),
         "intent":          intent,
         "subject":         subject,
         "user_type":       user_type,

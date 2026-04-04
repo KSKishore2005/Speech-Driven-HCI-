@@ -10,8 +10,8 @@ import { GestureEngine } from "./gesture.js";
 import { NLPEngine } from "./nlp.js";
 
 // ── Config ────────────────────────────────────────────────────
-const API_BASE    = "http://localhost:5000";
-const SESSION_ID  = `sess_${Date.now()}`;
+const API_BASE = "http://localhost:5000";
+const SESSION_ID = `sess_${Date.now()}`;
 
 // ── App States ────────────────────────────────────────────────
 const STATE = {
@@ -24,23 +24,23 @@ const STATE = {
 
 class SmartLearningApp {
   constructor() {
-    this.voice   = new VoiceEngine();
+    this.voice = new VoiceEngine();
     this.adapter = new AdaptiveEngine();
-    this.quiz    = new QuizEngine(this.voice, (e) => this._onQuizEvent(e));
-    this.nlp     = new NLPEngine();
+    this.quiz = new QuizEngine(this.voice, (e) => this._onQuizEvent(e));
+    this.nlp = new NLPEngine();
     this.gesture = new GestureEngine((g) => this._onGesture(g));
 
-    this.state          = STATE.IDLE;
-    this.currentLesson  = null;
+    this.state = STATE.IDLE;
+    this.currentLesson = null;
     this.currentSubject = null;
     this._backendOnline = false;
 
     // Stats for ability detection
     this._stats = {
       voiceAttempts: 0,
-      textAttempts:  0,
-      clickCount:    0,
-      startTime:     Date.now(),
+      textAttempts: 0,
+      clickCount: 0,
+      startTime: Date.now(),
     };
 
     this._bindDOM();
@@ -51,23 +51,23 @@ class SmartLearningApp {
 
   // ── DOM Bindings ─────────────────────────────────────────────
   _bindDOM() {
-    this.$orb         = document.getElementById("voice-orb");
-    this.$micBtn      = document.getElementById("mic-btn");
-    this.$gestureBtn  = document.getElementById("gesture-btn");
-    this.$textInput   = document.getElementById("text-input");
-    this.$sendBtn     = document.getElementById("send-btn");
-    this.$gestureWidget= document.getElementById("gesture-widget");
-    this.$gestureFb   = document.getElementById("gesture-feedback");
-    this.$transcript  = document.getElementById("transcript-text");
-    this.$response    = document.getElementById("response-text");
-    this.$caption     = document.getElementById("caption-bar");
+    this.$orb = document.getElementById("voice-orb");
+    this.$micBtn = document.getElementById("mic-btn");
+    this.$gestureBtn = document.getElementById("gesture-btn");
+    this.$textInput = document.getElementById("text-input");
+    this.$sendBtn = document.getElementById("send-btn");
+    this.$gestureWidget = document.getElementById("gesture-widget");
+    this.$gestureFb = document.getElementById("gesture-feedback");
+    this.$transcript = document.getElementById("transcript-text");
+    this.$response = document.getElementById("response-text");
+    this.$caption = document.getElementById("caption-bar");
     this.$subjectGrid = document.getElementById("subject-grid");
     this.$lessonPanel = document.getElementById("lesson-panel");
-    this.$quizPanel   = document.getElementById("quiz-panel");
-    this.$statusDot   = document.getElementById("status-dot");
+    this.$quizPanel = document.getElementById("quiz-panel");
+    this.$statusDot = document.getElementById("status-dot");
     this.$statusLabel = document.getElementById("status-label");
     this.$modeSelector = document.getElementById("mode-selector");
-    this.$apiStatus   = document.getElementById("api-status");
+    this.$apiStatus = document.getElementById("api-status");
 
     // Mic button
     this.$micBtn?.addEventListener("click", () => {
@@ -94,13 +94,13 @@ class SmartLearningApp {
         this.gesture.stop();
         this.$gestureWidget?.classList.add("hidden");
         this.$gestureBtn?.classList.remove("active");
-        if(this.$gestureFb) this.$gestureFb.textContent = "Camera off";
+        if (this.$gestureFb) this.$gestureFb.textContent = "Camera off";
       } else {
         this.$gestureWidget?.classList.remove("hidden");
         this.$gestureBtn?.classList.add("active");
-        if(this.$gestureFb) this.$gestureFb.textContent = "Initializing camera...";
+        if (this.$gestureFb) this.$gestureFb.textContent = "Initializing camera...";
         this.gesture.start().then(() => {
-          if(this.$gestureFb) this.$gestureFb.textContent = "Ready: Show gesture";
+          if (this.$gestureFb) this.$gestureFb.textContent = "Ready: Show gesture";
         });
       }
     });
@@ -128,9 +128,9 @@ class SmartLearningApp {
     // Keyboard shortcut: Space = mic
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space" && document.activeElement?.tagName !== "INPUT"
-          && document.activeElement?.tagName !== "TEXTAREA"
-          && document.activeElement?.tagName !== "SELECT"
-          && document.activeElement?.tagName !== "BUTTON") {
+        && document.activeElement?.tagName !== "TEXTAREA"
+        && document.activeElement?.tagName !== "SELECT"
+        && document.activeElement?.tagName !== "BUTTON") {
         e.preventDefault();
         this._handleSpacebarMic();
       }
@@ -189,11 +189,11 @@ class SmartLearningApp {
 
   _buildStaticSubjectGrid() {
     const subjects = [
-      { id: "cs",      title: "Computer Science", icon: "💻", color: "#6c63ff", lessons: 3 },
-      { id: "math",    title: "Mathematics",       icon: "📐", color: "#f59e0b", lessons: 2 },
-      { id: "science", title: "Science",           icon: "🔬", color: "#10b981", lessons: 2 },
-      { id: "english", title: "English",           icon: "📝", color: "#ec4899", lessons: 1 },
-      { id: "gk",      title: "General Knowledge", icon: "🌍", color: "#3b82f6", lessons: 1 },
+      { id: "cs", title: "Computer Science", icon: "💻", color: "#6c63ff", lessons: 3 },
+      { id: "math", title: "Mathematics", icon: "📐", color: "#f59e0b", lessons: 2 },
+      { id: "science", title: "Science", icon: "🔬", color: "#10b981", lessons: 2 },
+      { id: "english", title: "English", icon: "📝", color: "#ec4899", lessons: 1 },
+      { id: "gk", title: "General Knowledge", icon: "🌍", color: "#3b82f6", lessons: 1 },
     ];
     this._buildSubjectGrid(subjects.map(s => ({ ...s, lesson_count: s.lessons })));
   }
@@ -265,10 +265,10 @@ class SmartLearningApp {
 
     this.voice.onError = (err) => {
       const messages = {
-        "not-allowed":         "Microphone access denied. Please allow mic in browser settings.",
-        "no-speech":           "No speech detected. Try again.",
-        "network":             "Network error with speech recognition.",
-        "audio-capture":       "No microphone found. Please connect a microphone.",
+        "not-allowed": "Microphone access denied. Please allow mic in browser settings.",
+        "no-speech": "No speech detected. Try again.",
+        "network": "Network error with speech recognition.",
+        "audio-capture": "No microphone found. Please connect a microphone.",
         "service-not-allowed": "Speech service not allowed. Try Chrome browser.",
       };
       const msg = messages[err] || `Voice error: ${err}`;
@@ -373,7 +373,7 @@ class SmartLearningApp {
     const promptText = "I'm ready. Please speak, and let's continue our adaptive learning journey.";
     this._displayResponse(`🎯 ${promptText}`);
     if (this.$transcript) this.$transcript.textContent = "🔊 Assistant prompt...";
-    
+
     await this.voice.speak(promptText);
     setTimeout(() => this._activateMic(), 300);
   }
@@ -474,12 +474,12 @@ class SmartLearningApp {
     const body = {
       message,
       mode,
-      session_id:    SESSION_ID,
-      lesson_id:     lessonId || this.currentLesson?.id || null,
+      session_id: SESSION_ID,
+      lesson_id: lessonId || this.currentLesson?.id || null,
       voice_attempts: this._stats.voiceAttempts,
-      text_attempts:  this._stats.textAttempts,
-      total_time_ms:  Date.now() - this._stats.startTime,
-      click_count:    this._stats.clickCount,
+      text_attempts: this._stats.textAttempts,
+      total_time_ms: Date.now() - this._stats.startTime,
+      click_count: this._stats.clickCount,
     };
 
     try {
@@ -491,10 +491,10 @@ class SmartLearningApp {
 
       console.log(`📡 Calling ${API_BASE}/ask...`);
       const res = await fetch(`${API_BASE}/ask`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(body),
-        signal:  AbortSignal.timeout(15000),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!res.ok) {
@@ -503,7 +503,7 @@ class SmartLearningApp {
         throw new Error(`HTTP ${res.status}: ${errText.substring(0, 100)}`);
       }
       const data = await res.json();
-      
+
       console.log("✅ Backend response received:", {
         intent: data.intent,
         hasLesson: !!data.lesson,
@@ -519,16 +519,16 @@ class SmartLearningApp {
 
       // Store lesson context
       if (data.lesson) {
-        this.currentLesson  = data.lesson;
+        this.currentLesson = data.lesson;
         this.currentSubject = data.lesson.subject_id;
         this._showLessonPanel(data.lesson);
       }
 
-      const textResp   = data.response        || "I couldn't generate a response. Please try again.";
+      const textResp = data.response || "I couldn't generate a response. Please try again.";
       const speechResp = data.speech_response || textResp;
 
       console.log(`📤 Displaying response: "${textResp.substring(0, 50)}..."`);
-      this._displayResponse(textResp);
+      this._displayResponse(textResp, data.suggestions);
 
       // Speak if not in hearing-impaired mode
       if (this.adapter.getMode() !== "hearing-impaired") {
@@ -575,22 +575,25 @@ class SmartLearningApp {
       this.currentSubject = detected.subject;
       this._showLessonPanel(detected.lesson);
       response = `Okay, let's learn about ${detected.lesson.title}. ${detected.lesson.summary} Would you like to take a quiz on this?`;
-    } 
+    }
     else if (detected.intent === "quiz") {
       if (this.currentLesson) {
-          response = `Starting quiz on ${this.currentLesson.title}!`;
-          this._displayResponse(response);
-          if (this.adapter.getMode() !== "hearing-impaired") {
-             await this.voice.speak(response);
-          }
-          await this._startQuiz(this.currentLesson);
-          return;
+        response = `Starting quiz on ${this.currentLesson.title}!`;
+        this._displayResponse(response);
+        if (this.adapter.getMode() !== "hearing-impaired") {
+          await this.voice.speak(response);
+        }
+        const offlineSuggestions = ["Tell me more", "Take a quiz", "Explain logic gates"];
+        this._displayResponse(response, offlineSuggestions);
+        await this._startQuiz(this.currentLesson);
+        return;
       } else {
-          response = "Please select a subject or ask to learn something first before taking a quiz.";
+        response = "Please select a subject or ask to learn something first before taking a quiz.";
       }
     }
 
-    this._displayResponse(response);
+    const offlineSuggestions = ["Learn Computer Science", "Start a Quiz", "What can you do?"];
+    this._displayResponse(response, offlineSuggestions);
     if (this.adapter.getMode() !== "hearing-impaired") {
       await this.voice.speak(response);
     }
@@ -601,7 +604,7 @@ class SmartLearningApp {
     if (this.$gestureFb) {
       this.$gestureFb.textContent = `Recognized: ${gesture.toUpperCase()}`;
     }
-    
+
     // Map gestures to text inputs
     let textInput = "";
     if (gesture === "yes") textInput = "yes";
@@ -609,17 +612,17 @@ class SmartLearningApp {
     if (gesture === "help") textInput = "help";
     if (gesture === "stop") textInput = "stop";
     if (gesture === "next") textInput = "next";
-    
+
     if (textInput) {
-       // Visual hint that gesture was used
-       if (this.$textInput) this.$textInput.value = `[Gesture] ${textInput}`;
-       this._handleInput(textInput, "gesture");
+      // Visual hint that gesture was used
+      if (this.$textInput) this.$textInput.value = `[Gesture] ${textInput}`;
+      this._handleInput(textInput, "gesture");
     }
-    
+
     setTimeout(() => {
-       if (this.gesture.isActive && this.$gestureFb) {
-          this.$gestureFb.textContent = "Ready: Show gesture";
-       }
+      if (this.gesture.isActive && this.$gestureFb) {
+        this.$gestureFb.textContent = "Ready: Show gesture";
+      }
     }, 2500);
   }
 
@@ -707,7 +710,7 @@ class SmartLearningApp {
     const colorMap = { cs: "#6c63ff", math: "#f59e0b", science: "#10b981", english: "#ec4899", gk: "#3b82f6" };
     const color = colorMap[lesson.subject_id] || "#6c63ff";
     const iconMap = { cs: "💻", math: "📐", science: "🔬", english: "📝", gk: "🌍" };
-    const icon  = iconMap[lesson.subject_id] || "📚";
+    const icon = iconMap[lesson.subject_id] || "📚";
 
     this.$lessonPanel.classList.add("active");
     this.$lessonPanel.innerHTML = `
@@ -741,12 +744,34 @@ class SmartLearningApp {
     }
   }
 
-  _displayResponse(text) {
+  _displayResponse(text, suggestions = []) {
     if (this.$response) {
       // Ensure we always have text
       const displayText = text || "(No response text)";
       this.$response.textContent = displayText;
-      console.log(`📱 UI Response updated: "${displayText.substring(0, 50)}..."`);
+      
+      // Render suggestion chips
+      if (suggestions && suggestions.length > 0) {
+        const container = document.createElement("div");
+        container.className = "suggestion-chips-container";
+        
+        suggestions.forEach(q => {
+          const chip = document.createElement("button");
+          chip.className = "suggestion-chip";
+          chip.textContent = q;
+          chip.setAttribute("aria-label", `Ask: ${q}`);
+          chip.onclick = () => {
+             this._stats.clickCount++;
+             this.adapter.recordClick();
+             this._handleInput(q, "text");
+          };
+          container.appendChild(chip);
+        });
+        
+        this.$response.appendChild(container);
+      }
+
+      console.log(`📱 UI Response updated: "${displayText.substring(0, 50)}..." (${suggestions.length} suggestions)`);
     } else {
       console.warn("⚠️ Response element ($response) not found in DOM");
     }

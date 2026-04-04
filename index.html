@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Speech-Driven HCI for Differently-Abled Learners — A voice-first adaptive learning platform that detects user ability and dynamically adjusts the interface for visually impaired, hearing impaired, and motor impaired users." />
+  <meta name="description"
+    content="Speech-Driven HCI for Differently-Abled Learners — A voice-first adaptive learning platform that detects user ability and dynamically adjusts the interface for visually impaired, hearing impaired, and motor impaired users." />
   <meta name="theme-color" content="#6c63ff" />
   <title>Smart Learning Assistant — Speech-Driven HCI</title>
 
@@ -12,7 +14,8 @@
   <link rel="stylesheet" href="css/themes.css" />
 
   <!-- Favicon emoji -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
 </head>
 
 <body>
@@ -50,10 +53,12 @@
         </select>
 
         <!-- Accessibility toggles -->
-        <button class="btn-icon" id="contrast-btn" title="Toggle High Contrast" aria-label="Toggle high contrast mode" onclick="document.body.classList.toggle('high-contrast')">
+        <button class="btn-icon" id="contrast-btn" title="Toggle High Contrast" aria-label="Toggle high contrast mode"
+          onclick="document.body.classList.toggle('high-contrast')">
           🌓
         </button>
-        <button class="btn-icon" id="font-btn" title="Toggle Large Fonts" aria-label="Toggle large font size" onclick="document.body.classList.toggle('large-font')">
+        <button class="btn-icon" id="font-btn" title="Toggle Large Fonts" aria-label="Toggle large font size"
+          onclick="document.body.classList.toggle('large-font')">
           𝐀
         </button>
       </div>
@@ -76,9 +81,8 @@
 
         <!-- Voice Orb -->
         <div class="orb-container" role="presentation">
-          <div id="voice-orb" role="button" tabindex="0"
-               aria-label="Voice assistant orb. Click to activate microphone."
-               onkeydown="if(event.key==='Enter'||event.key===' '){document.getElementById('mic-btn').click()}">
+          <div id="voice-orb" role="button" tabindex="0" aria-label="Voice assistant orb. Click to activate microphone."
+            onkeydown="if(event.key==='Enter'||event.key===' '){document.getElementById('mic-btn').click()}">
             <!-- Wave rings (listening animation) -->
             <div class="orb-wave" aria-hidden="true"></div>
             <div class="orb-wave" aria-hidden="true"></div>
@@ -120,14 +124,8 @@
           <button id="gesture-btn" aria-label="Toggle Hand Gesture Camera" aria-pressed="false" title="Hand Gestures">
             ✋
           </button>
-          <input
-            id="text-input"
-            type="text"
-            placeholder='Type here or say "help" to get started…'
-            aria-label="Type your message here"
-            autocomplete="off"
-            spellcheck="false"
-          />
+          <input id="text-input" type="text" placeholder='Type here or say "help" to get started…'
+            aria-label="Type your message here" autocomplete="off" spellcheck="false" />
           <button id="send-btn" aria-label="Send message">
             ➤
           </button>
@@ -245,16 +243,19 @@
   <style>
     .sr-only {
       position: absolute;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
       overflow: hidden;
-      clip: rect(0,0,0,0);
+      clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
     }
 
     .btn-icon {
-      width: 36px; height: 36px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
       border: 1px solid var(--clr-border);
       background: var(--clr-surface-2);
@@ -265,6 +266,7 @@
       place-items: center;
       transition: all 0.2s;
     }
+
     .btn-icon:hover {
       background: var(--clr-surface-3);
       border-color: var(--clr-border-hover);
@@ -301,7 +303,8 @@
   </style>
 
   <!-- Hand Gesture UI Widget -->
-  <div id="gesture-widget" class="gesture-widget hidden" aria-hidden="true" role="region" aria-label="Camera preview for gestures">
+  <div id="gesture-widget" class="gesture-widget hidden" aria-hidden="true" role="region"
+    aria-label="Camera preview for gestures">
     <div class="gesture-header">✋ Gesture Tracking</div>
     <video id="gesture-video" width="320" height="240" autoplay playsinline muted style="display:none;"></video>
     <canvas id="gesture-canvas" width="320" height="240"></canvas>
@@ -316,9 +319,12 @@
   </div>
 
   <!-- MediaPipe dependencies (Pinned for stability) -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"
+    crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
 
   <!-- Load app as ES module -->
@@ -332,4 +338,5 @@
   </noscript>
 
 </body>
+
 </html>
